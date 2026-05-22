@@ -21,6 +21,7 @@
 		betaAction: '',
 		betaMessage: null,
 		betaPlan: null,
+		betaProductPlan: null,
 		lastActionAt: '',
 	};
 
@@ -65,6 +66,11 @@
 
 	function statusValue( value ) {
 		const status = String( value || 'unknown' ).toLowerCase();
+
+		if ( status === 'ready' ) {
+			return 'ok';
+		}
+
 		return [ 'ok', 'warning', 'error' ].includes( status ) ? status : 'unknown';
 	}
 
@@ -180,26 +186,53 @@
 	}
 
 	function renderBetaPlanPreview() {
-		if ( ! state.betaPlan ) {
-			return '<p class="factory-empty">Use Preview plan to inspect the current Real Estate convergence plan.</p>';
+		if ( ! state.betaProductPlan && ! state.betaPlan ) {
+			return '<p class="factory-empty">Use Preview plan to inspect the prepared Real Estate preset plan.</p>';
 		}
 
-		const summary = state.betaPlan.summary || {};
-		const items = Array.isArray( state.betaPlan.items ) ? state.betaPlan.items.slice( 0, 6 ) : [];
+		const productPlan = state.betaProductPlan || {};
+		const sections = Array.isArray( productPlan.sections ) ? productPlan.sections : [];
+		const summary = state.betaPlan && state.betaPlan.summary ? state.betaPlan.summary : {};
+		const items = state.betaPlan && Array.isArray( state.betaPlan.items ) ? state.betaPlan.items.slice( 0, 8 ) : [];
 
 		return [
-			'<div class="factory-metric-grid factory-demo-metrics">',
-				renderMetric( 'Create', summaryValue( summary, 'create' ) ),
-				renderMetric( 'Update', summaryValue( summary, 'update' ) ),
-				renderMetric( 'Skip', summaryValue( summary, 'skip' ) ),
-				renderMetric( 'Warning', summaryValue( summary, 'warning' ) ),
-				renderMetric( 'Error', summaryValue( summary, 'error' ) ),
-			'</div>',
-			items.length
-				? '<ul class="factory-demo-plan-list">' + items.map( function ( item ) {
-					return '<li><strong>' + escapeHtml( item.action || 'skip' ) + '</strong><span>' + escapeHtml( item.message || '' ) + '</span></li>';
-				} ).join( '' ) + '</ul>'
-				: '<p class="factory-empty">No plan items returned.</p>',
+			productPlan.title
+				? '<div class="factory-product-plan-hero"><span>' + escapeHtml( productPlan.mode || 'Beta preset plan' ) + '</span><h4>' + escapeHtml( productPlan.title ) + '</h4><p>' + escapeHtml( productPlan.summary || '' ) + '</p></div>'
+				: '',
+			sections.length
+				? '<div class="factory-product-plan-sections">' + sections.map( function ( section ) {
+					const sectionItems = Array.isArray( section.items ) ? section.items : [];
+
+					return [
+						'<section class="factory-product-plan-section factory-product-plan-section-' + statusValue( section.status ) + '">',
+							'<div class="factory-product-plan-section-heading">',
+								'<h4>' + escapeHtml( section.label || 'Plan section' ) + '</h4>',
+								badge( section.status || 'ready' ),
+							'</div>',
+							sectionItems.length
+								? '<ul>' + sectionItems.map( function ( item ) {
+									return '<li>' + escapeHtml( item ) + '</li>';
+								} ).join( '' ) + '</ul>'
+								: '<p class="factory-empty">No section items returned.</p>',
+						'</section>',
+					].join( '' );
+				} ).join( '' ) + '</div>'
+				: '',
+			'<details class="factory-raw-plan-details">',
+				'<summary>Raw dry-run details</summary>',
+				'<div class="factory-metric-grid factory-demo-metrics">',
+					renderMetric( 'Create', summaryValue( summary, 'create' ) ),
+					renderMetric( 'Update', summaryValue( summary, 'update' ) ),
+					renderMetric( 'Skip', summaryValue( summary, 'skip' ) ),
+					renderMetric( 'Warning', summaryValue( summary, 'warning' ) ),
+					renderMetric( 'Error', summaryValue( summary, 'error' ) ),
+				'</div>',
+				items.length
+					? '<ul class="factory-demo-plan-list">' + items.map( function ( item ) {
+						return '<li><strong>' + escapeHtml( item.action || 'skip' ) + '</strong><span>' + escapeHtml( item.message || '' ) + '</span></li>';
+					} ).join( '' ) + '</ul>'
+					: '<p class="factory-empty">No raw plan items returned.</p>',
+			'</details>',
 		].join( '' );
 	}
 
@@ -570,6 +603,7 @@
 		request( config.endpoints?.realEstatePlan || '/beta/real-estate/plan' )
 			.then( function ( data ) {
 				state.betaPlan = data.plan || null;
+				state.betaProductPlan = data.product_plan || null;
 				markLastAction();
 				setBetaMessage( 'ok', 'Preview plan generated.' );
 			} )

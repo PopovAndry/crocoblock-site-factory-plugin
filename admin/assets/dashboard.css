@@ -274,6 +274,116 @@
 	padding: 9px 10px;
 }
 
+.factory-product-plan-hero {
+	background: #ffffff;
+	border: 1px solid #b9e6de;
+	border-radius: 8px;
+	margin-bottom: 14px;
+	padding: 16px;
+}
+
+.factory-product-plan-hero span {
+	color: #0f766e;
+	display: block;
+	font-size: 12px;
+	font-weight: 800;
+	margin-bottom: 6px;
+	text-transform: uppercase;
+}
+
+.factory-product-plan-hero h4 {
+	color: #10201d;
+	font-size: 20px;
+	line-height: 1.25;
+	margin: 0 0 8px;
+}
+
+.factory-product-plan-hero p {
+	color: #3d4d49;
+	font-size: 14px;
+	line-height: 1.55;
+	margin: 0;
+}
+
+.factory-product-plan-sections {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.factory-product-plan-section {
+	background: rgba(255, 255, 255, 0.82);
+	border: 1px solid #d7eee9;
+	border-radius: 8px;
+	padding: 13px;
+}
+
+.factory-product-plan-section-warning {
+	border-color: #f0c33c;
+}
+
+.factory-product-plan-section-error {
+	border-color: #d63638;
+}
+
+.factory-product-plan-section-heading {
+	align-items: center;
+	display: flex;
+	gap: 10px;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.factory-product-plan-section h4 {
+	color: #10201d;
+	font-size: 14px;
+	line-height: 1.3;
+	margin: 0;
+}
+
+.factory-product-plan-section ul {
+	display: grid;
+	gap: 6px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.factory-product-plan-section li {
+	color: #263633;
+	font-size: 13px;
+	line-height: 1.4;
+	padding-left: 16px;
+	position: relative;
+}
+
+.factory-product-plan-section li::before {
+	background: #14b8a6;
+	border-radius: 999px;
+	content: "";
+	height: 6px;
+	left: 0;
+	position: absolute;
+	top: 7px;
+	width: 6px;
+}
+
+.factory-raw-plan-details {
+	border-top: 1px solid #cde9e5;
+	margin-top: 16px;
+	padding-top: 14px;
+}
+
+.factory-raw-plan-details summary {
+	color: #0f766e;
+	cursor: pointer;
+	font-weight: 800;
+}
+
+.factory-raw-plan-details .factory-demo-metrics {
+	margin-top: 12px;
+}
+
 .factory-demo-plan-list {
 	margin-top: 12px;
 }
@@ -533,6 +643,7 @@
 @media (max-width: 1100px) {
 	.factory-grid,
 	.factory-demo-grid,
+	.factory-product-plan-sections,
 	.factory-detail-grid,
 	.factory-adapter-grid {
 		grid-template-columns: 1fr;

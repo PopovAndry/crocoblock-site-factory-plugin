@@ -196,6 +196,7 @@ function factory_register_rest_routes(): void {
             $blueprint    = factory_rest_load_real_estate_blueprint();
             $plan         = factory_rest_build_plan( $blueprint );
             $dependencies = factory_rest_get_real_estate_dependency_status();
+            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies );
 
             return new WP_REST_Response(
                 [
@@ -203,6 +204,7 @@ function factory_register_rest_routes(): void {
                     'preset'       => 'real-estate',
                     'plan'         => $plan,
                     'dependencies' => $dependencies,
+                    'product_plan' => $product_plan,
                 ]
             );
         } catch ( Throwable $e ) {
@@ -305,6 +307,122 @@ function factory_register_rest_routes(): void {
         }
 
         return $summary;
+    }
+
+    function factory_rest_build_real_estate_product_plan(
+        array $blueprint,
+        array $plan,
+        array $dependencies
+    ): array {
+        $property_count = isset( $blueprint['content']['property'] ) && is_array( $blueprint['content']['property'] )
+            ? count( $blueprint['content']['property'] )
+            : 0;
+
+        $asset_pools = $blueprint['site']['assets']['property_images'] ?? [];
+        $asset_labels = [];
+
+        if ( is_array( $asset_pools ) ) {
+            foreach ( $asset_pools as $type => $sources ) {
+                if ( ! is_string( $type ) || '' === trim( $type ) ) {
+                    continue;
+                }
+
+                $count = is_array( $sources ) ? count( $sources ) : ( is_string( $sources ) && '' !== trim( $sources ) ? 1 : 0 );
+                $asset_labels[] = sprintf( '%s image pool (%d)', $type, $count );
+            }
+        }
+
+        $summary = $plan['summary'] ?? [];
+        $dependency_items = [];
+
+        foreach ( [ 'jet_engine' => 'JetEngine', 'kava' => 'Kava theme' ] as $key => $label ) {
+            $dependency = $dependencies[ $key ] ?? [];
+            $active = ! empty( $dependency['active'] );
+            $installed = ! empty( $dependency['installed'] );
+
+            $dependency_items[] = $active
+                ? "{$label} active"
+                : ( $installed ? "{$label} installed but inactive" : "{$label} missing" );
+        }
+
+        $dependency_status = ! empty( $dependencies['ready'] )
+            ? 'ready'
+            : 'warning';
+
+        return [
+            'title'    => 'Real Estate Demo Plan',
+            'mode'     => 'Prepared Real Estate preset',
+            'summary'  => 'Generate a Kyiv real estate website with catalog, properties, images, filters, single pages, contact page, and validation proof.',
+            'sections' => [
+                [
+                    'label'  => 'Site structure',
+                    'status' => 'ready',
+                    'items'  => [
+                        'Home page',
+                        'Properties catalog',
+                        'Contact page',
+                        'Navigation menu',
+                    ],
+                ],
+                [
+                    'label'  => 'Data model',
+                    'status' => 'ready',
+                    'items'  => [
+                        'Property CPT',
+                        'Purpose taxonomy',
+                        'Property Type taxonomy',
+                        'District taxonomy',
+                        'Price/address/bedrooms/bathrooms/size fields',
+                    ],
+                ],
+                [
+                    'label'  => 'Content',
+                    'status' => 'ready',
+                    'items'  => [
+                        "{$property_count} Kyiv properties",
+                        'Sale and rent listings',
+                        'Apartment, house, and commercial types',
+                    ],
+                ],
+                [
+                    'label'  => 'Media',
+                    'status' => empty( $asset_labels ) ? 'warning' : 'ready',
+                    'items'  => empty( $asset_labels )
+                        ? [ 'Property image pools not configured' ]
+                        : $asset_labels,
+                ],
+                [
+                    'label'  => 'Frontend features',
+                    'status' => 'ready',
+                    'items'  => [
+                        'Catalog cards',
+                        'GET filters',
+                        'Single property pages',
+                        'Contact agency CTA',
+                    ],
+                ],
+                [
+                    'label'  => 'Dependencies',
+                    'status' => $dependency_status,
+                    'items'  => $dependency_items,
+                ],
+                [
+                    'label'  => 'Proof',
+                    'status' => 'ready',
+                    'items'  => [
+                        'Execution trace',
+                        'Validation checks',
+                        'Run manifest',
+                        sprintf(
+                            'Current dry-run: %d create / %d update / %d unchanged',
+                            (int) ( $summary['create'] ?? 0 ),
+                            (int) ( $summary['update'] ?? 0 ),
+                            (int) ( $summary['skip'] ?? 0 )
+                        ),
+                    ],
+                ],
+            ],
+        ];
     }
 
     function factory_rest_get_real_estate_dependency_status(): array {
