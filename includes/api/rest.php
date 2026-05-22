@@ -4,123 +4,74 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action(
-	'rest_api_init',
-	static function () {
+add_action( 'rest_api_init', 'factory_register_rest_routes' );
 
-            register_rest_route(
-            'factory/v1',
-            '/validate',
-            [
-                'methods'             => 'POST',
-                'callback'            => 'factory_rest_validate',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
+function factory_register_rest_routes(): void {
+	$namespace = 'factory/v1';
 
+	$routes = [
+		'/validate' => [
+			'methods'  => 'POST',
+			'callback' => 'factory_rest_validate',
+		],
+		'/summary' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_summary',
+		],
+		'/doctor' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_doctor',
+		],
+		'/runs' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_runs',
+		],
+		'/run/latest' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_latest_run',
+		],
+		'/run/(?P<file>run-[^/]+\.json)' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_run',
+		],
+		'/explain/latest' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_explain_latest',
+		],
+		'/index' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_index',
+		],
+		'/adapters' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_adapters',
+		],
+		'/capabilities' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_capabilities',
+		],
+		'/beta/real-estate/plan' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_beta_real_estate_plan',
+		],
+		'/beta/real-estate/apply' => [
+			'methods'  => 'POST',
+			'callback' => 'factory_rest_beta_real_estate_apply',
+		],
+	];
+
+	foreach ( $routes as $route => $args ) {
 		register_rest_route(
-			'factory/v1',
-			'/summary',
+			$namespace,
+			$route,
 			[
-				'methods'             => 'GET',
-				'callback'            => 'factory_rest_summary',
+				'methods'             => $args['methods'],
+				'callback'            => $args['callback'],
 				'permission_callback' => 'factory_rest_require_manage_options',
 			]
 		);
-
-		register_rest_route(
-			'factory/v1',
-			'/doctor',
-			[
-				'methods'             => 'GET',
-				'callback'            => 'factory_rest_doctor',
-				'permission_callback' => 'factory_rest_require_manage_options',
-			]
-		);
-
-		register_rest_route(
-			'factory/v1',
-			'/runs',
-			[
-				'methods'             => 'GET',
-				'callback'            => 'factory_rest_runs',
-				'permission_callback' => 'factory_rest_require_manage_options',
-			]
-		);
-            register_rest_route(
-            'factory/v1',
-            '/run/latest',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_latest_run',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/run/(?P<file>run-[^/]+\.json)',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_run',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/explain/latest',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_explain_latest',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/index',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_index',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/adapters',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_adapters',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/capabilities',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_capabilities',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/beta/real-estate/plan',
-            [
-                'methods'             => 'GET',
-                'callback'            => 'factory_rest_beta_real_estate_plan',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
-        register_rest_route(
-            'factory/v1',
-            '/beta/real-estate/apply',
-            [
-                'methods'             => 'POST',
-                'callback'            => 'factory_rest_beta_real_estate_apply',
-                'permission_callback' => 'factory_rest_require_manage_options',
-            ]
-        );
 	}
-);
+}
 
     function factory_rest_require_manage_options(): bool {
         return current_user_can( 'manage_options' );
@@ -883,4 +834,8 @@ function factory_rest_runs( WP_REST_Request $request ): WP_REST_Response {
 			'runs'   => $rows,
 		]
 	);
+}
+
+if ( did_action( 'rest_api_init' ) ) {
+	factory_register_rest_routes();
 }

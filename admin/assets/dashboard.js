@@ -25,6 +25,10 @@
 	};
 
 	function endpoint( path ) {
+		if ( /^https?:\/\//i.test( path ) ) {
+			return path;
+		}
+
 		const base = ( config.restBase || '' ).replace( /\/$/, '' );
 		return base + path;
 	}

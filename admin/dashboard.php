@@ -50,13 +50,13 @@ function factory_enqueue_admin_dashboard_assets( string $hook ): void {
 			'restNonce' => wp_create_nonce( 'wp_rest' ),
 			'homeUrl'   => esc_url_raw( home_url( '/' ) ),
 			'endpoints' => [
-				'doctor'  => '/doctor',
-				'runs'    => '/runs?limit=20',
-				'latest'  => '/run/latest',
-				'run'     => '/run/{file}',
-				'adapters' => '/adapters',
-				'realEstatePlan'  => '/beta/real-estate/plan',
-				'realEstateApply' => '/beta/real-estate/apply',
+				'doctor'          => esc_url_raw( rest_url( 'factory/v1/doctor' ) ),
+				'runs'            => esc_url_raw( add_query_arg( 'limit', 20, rest_url( 'factory/v1/runs' ) ) ),
+				'latest'          => esc_url_raw( rest_url( 'factory/v1/run/latest' ) ),
+				'run'             => esc_url_raw( rest_url( 'factory/v1/run/{file}' ) ),
+				'adapters'        => esc_url_raw( rest_url( 'factory/v1/adapters' ) ),
+				'realEstatePlan'  => esc_url_raw( rest_url( 'factory/v1/beta/real-estate/plan' ) ),
+				'realEstateApply' => esc_url_raw( rest_url( 'factory/v1/beta/real-estate/apply' ) ),
 			],
 		]
 	);
