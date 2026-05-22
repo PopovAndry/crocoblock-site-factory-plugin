@@ -1860,7 +1860,7 @@ class Factory_Render_Adapter {
 				$title     = $section['title'] ?? ( $home['title'] ?? 'Kyiv Turquoise Realty' );
 				$subtitle  = $section['subtitle'] ?? '';
 				$cta_label = $section['cta_label'] ?? 'Browse properties';
-				$cta_url   = $section['cta_url'] ?? '/properties/';
+				$cta_url   = $this->resolve_frontend_url( $section['cta_url'] ?? '', '/properties/' );
 
 				$html .= '<section class="factory-home-hero" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $background ) . '; padding: 76px 0 54px;">';
 				$html .= '<div style="max-width: 1120px; margin: 0 auto; padding: 0 24px;">';
@@ -1886,7 +1886,7 @@ class Factory_Render_Adapter {
 				$html .= '<span style="color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0;">Kyiv catalog</span>';
 				$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 6px 0 0;">' . esc_html( $title ) . '</h2>';
 				$html .= '</div>';
-				$html .= '<a href="/properties/" style="color: ' . esc_attr( $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
+				$html .= '<a href="' . esc_url( $this->resolve_frontend_url( '/properties/', '/properties/' ) ) . '" style="color: ' . esc_attr( $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
 				$html .= '</header>';
 				$html .= sprintf(
 					'[factory_listing slug="%s" query="%s"]',
@@ -1901,7 +1901,7 @@ class Factory_Render_Adapter {
 				$title     = $section['title'] ?? 'Ready to find your Kyiv property?';
 				$text      = $section['text'] ?? '';
 				$cta_label = $section['cta_label'] ?? 'Contact agency';
-				$cta_url   = $section['cta_url'] ?? '/contact/';
+				$cta_url   = $this->resolve_frontend_url( $section['cta_url'] ?? '', '/contact/' );
 
 				$html .= '<section style="max-width: 1120px; margin: 0 auto; padding: 44px 24px 84px;">';
 				$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 24px; padding: clamp(28px, 5vw, 54px); box-shadow: 0 18px 44px rgba(15, 118, 110, 0.11);">';
@@ -1929,7 +1929,7 @@ class Factory_Render_Adapter {
 		$phone        = $contact['phone'] ?? '';
 		$email        = $contact['email'] ?? '';
 		$cta_label    = $contact['cta_label'] ?? 'Browse properties';
-		$cta_url      = $contact['cta_url'] ?? '/properties/';
+		$cta_url      = $this->resolve_frontend_url( $contact['cta_url'] ?? '', '/properties/' );
 
 		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: -40px 0 0; padding: 88px 24px; color: #10201d;">';
 		$html .= '<div style="max-width: 920px; margin: 0 auto;">';
@@ -1945,6 +1945,29 @@ class Factory_Render_Adapter {
 		$html .= '</section>';
 
 		return $html;
+	}
+
+	private function resolve_frontend_url( $url, string $fallback ): string {
+		$url = is_string( $url ) ? trim( $url ) : '';
+
+		if ( '' === $url ) {
+			$url = $fallback;
+		}
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if (
+			0 === strpos( $url, '#' )
+			|| 0 === strpos( $url, 'mailto:' )
+			|| 0 === strpos( $url, 'tel:' )
+			|| preg_match( '#^https?://#i', $url )
+		) {
+			return $url;
+		}
+
+		return home_url( '/' . ltrim( $url, '/' ) );
 	}
 
 	private function get_archive_page_config( string $post_type ): array {
