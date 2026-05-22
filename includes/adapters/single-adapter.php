@@ -242,7 +242,7 @@ class Factory_Single_Adapter {
 		$property_type = $this->get_property_meta_or_term( $post_id, 'property_type' );
 		$content       = apply_filters( 'the_content', get_the_content() );
 		$contact_url   = add_query_arg(
-			[ 'property' => sanitize_title( get_post_field( 'post_name', $post_id ) ) ],
+			[ 'factory_property' => sanitize_title( get_post_field( 'post_name', $post_id ) ) ],
 			home_url( '/contact/' )
 		);
 		$stats         = [];

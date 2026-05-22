@@ -2061,8 +2061,8 @@ class Factory_Render_Adapter {
 	}
 
 	private function get_request_viewing_property_context(): array {
-		$slug = isset( $_GET['property'] )
-			? sanitize_title( wp_unslash( (string) $_GET['property'] ) )
+		$slug = isset( $_GET['factory_property'] )
+			? sanitize_title( wp_unslash( (string) $_GET['factory_property'] ) )
 			: '';
 
 		if ( '' === $slug ) {
