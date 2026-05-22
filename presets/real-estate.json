@@ -48,6 +48,15 @@
           "blueprints/assets/real-estate/commercial/commercial-10.png"
         ]
       }
+    },
+    "forms": {
+      "request_viewing": {
+        "enabled": true,
+        "provider": "auto",
+        "title": "Request a Viewing",
+        "jetformbuilder_form_id": null,
+        "fallback_email": "hello@example.com"
+      }
     }
   },
   "theme": {

@@ -345,6 +345,11 @@ function factory_register_rest_routes(): void {
                 : ( $installed ? "{$label} installed but inactive" : "{$label} missing" );
         }
 
+        $jetformbuilder = $dependencies['jetformbuilder'] ?? [];
+        $dependency_items[] = ! empty( $jetformbuilder['available'] )
+            ? 'JetFormBuilder available for Request Viewing form'
+            : 'JetFormBuilder optional: Request Viewing fallback will be used';
+
         $dependency_status = ! empty( $dependencies['ready'] )
             ? 'ready'
             : 'warning';
@@ -399,6 +404,7 @@ function factory_register_rest_routes(): void {
                         'GET filters',
                         'Single property pages',
                         'Contact agency CTA',
+                        'Request Viewing fallback/form section',
                     ],
                 ],
                 [
@@ -433,6 +439,8 @@ function factory_register_rest_routes(): void {
         $plugins              = function_exists( 'get_plugins' ) ? get_plugins() : [];
         $jetengine_installed  = false;
         $jetengine_active     = false;
+        $jfb_installed        = false;
+        $jfb_active           = false;
         $kava_theme           = wp_get_theme( 'kava' );
         $kava_installed       = $kava_theme && $kava_theme->exists();
         $current_theme        = wp_get_theme();
@@ -446,6 +454,22 @@ function factory_register_rest_routes(): void {
                     $jetengine_active = true;
                 }
             }
+
+            if ( 'jet-form-builder/jet-form-builder.php' === $file || str_starts_with( $file, 'jet-form-builder/' ) ) {
+                $jfb_installed = true;
+
+                if ( function_exists( 'is_plugin_active' ) && is_plugin_active( $file ) ) {
+                    $jfb_active = true;
+                }
+            }
+        }
+
+        $jfb_available = $jfb_active
+            || function_exists( 'jet_form_builder' )
+            || defined( 'JET_FORM_BUILDER_VERSION' );
+
+        if ( $jfb_available && function_exists( 'post_type_exists' ) ) {
+            $jfb_available = post_type_exists( 'jet-form-builder' );
         }
 
         return [
@@ -459,6 +483,14 @@ function factory_register_rest_routes(): void {
                 'installed' => $kava_installed,
                 'active'    => $kava_active,
                 'status'    => $kava_active ? 'ok' : ( $kava_installed ? 'warning' : 'error' ),
+            ],
+            'jetformbuilder' => [
+                'installed' => $jfb_installed,
+                'active'    => $jfb_active,
+                'available' => $jfb_available,
+                'optional'  => true,
+                'status'    => $jfb_available ? 'ok' : 'warning',
+                'fallback'  => ! $jfb_available,
             ],
         ];
     }

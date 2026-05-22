@@ -10,6 +10,7 @@ class Factory_Render_Adapter {
 
 	public function register( array $blueprint ): void {
 		add_shortcode( 'factory_listing', [ $this, 'render_listing_shortcode' ] );
+		add_shortcode( 'factory_request_viewing', [ $this, 'render_request_viewing_shortcode' ] );
 		add_action( 'template_redirect', [ $this, 'redirect_property_archive' ] );
 	}
 
@@ -200,6 +201,12 @@ class Factory_Render_Adapter {
 
 		if ( is_array( $navigation_check ) ) {
 			$results[] = $navigation_check;
+		}
+
+		$request_viewing_check = $this->validate_request_viewing( $blueprint );
+
+		if ( is_array( $request_viewing_check ) ) {
+			$results[] = $request_viewing_check;
 		}
 
 		return $results;
@@ -1941,10 +1948,218 @@ class Factory_Render_Adapter {
 		$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Email</strong><span>' . esc_html( $email ) . '</span></div>';
 		$html .= '</div>';
 		$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $accent ) . '; color: #fff; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+		$html .= '[factory_request_viewing]';
 		$html .= '</div>';
 		$html .= '</section>';
 
 		return $html;
+	}
+
+	public function render_request_viewing_shortcode(): string {
+		$blueprint = factory_get_blueprint();
+		$config    = $this->get_request_viewing_config( $blueprint );
+
+		if ( empty( $config ) || false === ( $config['enabled'] ?? true ) ) {
+			return '';
+		}
+
+		$style_tokens = $this->get_site_style_tokens( $blueprint );
+		$primary      = $style_tokens['primary'];
+		$accent       = $style_tokens['accent'];
+		$background   = $style_tokens['background'];
+		$title        = is_string( $config['title'] ?? null ) && '' !== trim( $config['title'] )
+			? trim( $config['title'] )
+			: 'Request a Viewing';
+		$form_id      = $this->get_valid_jetformbuilder_form_id( $config );
+		$property     = $this->get_request_viewing_property_context();
+
+		ob_start();
+		?>
+
+		<section class="factory-request-viewing" style="margin-top: 42px; border: 1px solid #b9e6de; border-radius: 24px; background: #fff; padding: clamp(24px, 4vw, 38px); box-shadow: 0 18px 44px rgba(15, 118, 110, 0.1);">
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 28px; align-items: start;">
+				<div>
+					<span style="display: inline-flex; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $primary ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 16px;">
+						Request Viewing
+					</span>
+					<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 0 0 12px; color: #10201d;">
+						<?php echo esc_html( $title ); ?>
+					</h2>
+
+					<?php if ( ! empty( $property ) ) : ?>
+						<p style="color: #52635f; font-size: 17px; line-height: 1.6; margin: 0 0 18px;">
+							Tell us when you would like to view <strong><?php echo esc_html( $property['title'] ); ?></strong>.
+						</p>
+
+						<div style="border: 1px solid #d7eee9; border-radius: 18px; background: <?php echo esc_attr( $background ); ?>; padding: 16px 18px; color: #213532;">
+							<div style="font-weight: 900; margin-bottom: 6px;"><?php echo esc_html( $property['title'] ); ?></div>
+							<?php if ( '' !== $property['price'] ) : ?>
+								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 15px; font-weight: 900; margin-bottom: 4px;"><?php echo esc_html( $this->format_property_price( $property['price'] ) ); ?></div>
+							<?php endif; ?>
+							<?php if ( '' !== $property['address'] ) : ?>
+								<div style="color: #52635f; font-size: 14px; line-height: 1.45;"><?php echo esc_html( $property['address'] ); ?></div>
+							<?php endif; ?>
+						</div>
+					<?php else : ?>
+						<p style="color: #52635f; font-size: 17px; line-height: 1.6; margin: 0;">
+							Share the property you are interested in and the agency will follow up with viewing details.
+						</p>
+					<?php endif; ?>
+				</div>
+
+				<div>
+					<?php if ( $form_id ) : ?>
+						<?php echo do_shortcode( sprintf( '[jet_fb_form form_id="%d" submit_type="ajax"]', $form_id ) ); ?>
+					<?php else : ?>
+						<?php echo $this->render_request_viewing_fallback( $config, $property, $accent ); ?>
+					<?php endif; ?>
+				</div>
+			</div>
+		</section>
+
+		<?php
+		return ob_get_clean();
+	}
+
+	private function render_request_viewing_fallback( array $config, array $property, string $accent ): string {
+		$email = is_string( $config['fallback_email'] ?? null ) && is_email( $config['fallback_email'] )
+			? $config['fallback_email']
+			: get_option( 'admin_email' );
+
+		$property_title = $property['title'] ?? '';
+		$subject        = '' !== $property_title
+			? "Request a viewing: {$property_title}"
+			: 'Request a property viewing';
+		$body           = '' !== $property_title
+			? "Hello,%0D%0A%0D%0AI would like to request a viewing for {$property_title}.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred time:%0D%0AMessage:"
+			: "Hello,%0D%0A%0D%0AI would like to request a property viewing.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred time:%0D%0AMessage:";
+		$mailto         = add_query_arg(
+			[
+				'subject' => $subject,
+				'body'    => $body,
+			],
+			'mailto:' . $email
+		);
+
+		ob_start();
+		?>
+
+		<div style="border: 1px dashed #9ddbd2; border-radius: 20px; background: #f8fffe; padding: 22px;">
+			<div style="color: #10201d; font-size: 16px; font-weight: 900; margin-bottom: 8px;">
+				Request by email
+			</div>
+			<p style="color: #52635f; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+				JetFormBuilder is not connected for this demo yet, so requests are routed through the agency email fallback.
+			</p>
+			<a href="<?php echo esc_url( $mailto ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $accent ); ?>; color: #fff; padding: 12px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+				Email the agency
+			</a>
+		</div>
+
+		<?php
+		return ob_get_clean();
+	}
+
+	private function get_request_viewing_property_context(): array {
+		$slug = isset( $_GET['property'] )
+			? sanitize_title( wp_unslash( (string) $_GET['property'] ) )
+			: '';
+
+		if ( '' === $slug ) {
+			return [];
+		}
+
+		$post = get_page_by_path( $slug, OBJECT, 'property' );
+
+		if ( ! $post || 'publish' !== $post->post_status ) {
+			return [];
+		}
+
+		return [
+			'id'      => (int) $post->ID,
+			'slug'    => $slug,
+			'title'   => get_the_title( $post ),
+			'address' => (string) get_post_meta( $post->ID, 'address', true ),
+			'price'   => (string) get_post_meta( $post->ID, 'price', true ),
+		];
+	}
+
+	private function get_request_viewing_config( array $blueprint ): array {
+		$config = $blueprint['site']['forms']['request_viewing'] ?? [];
+
+		return is_array( $config ) ? $config : [];
+	}
+
+	private function get_valid_jetformbuilder_form_id( array $config ): int {
+		$form_id = absint( $config['jetformbuilder_form_id'] ?? 0 );
+
+		if ( ! $form_id || ! $this->is_jetformbuilder_available() ) {
+			return 0;
+		}
+
+		$form = get_post( $form_id );
+
+		if ( ! $form || 'jet-form-builder' !== $form->post_type || 'publish' !== $form->post_status ) {
+			return 0;
+		}
+
+		return $form_id;
+	}
+
+	private function is_jetformbuilder_available(): bool {
+		if ( ! function_exists( 'is_plugin_active' ) && defined( 'ABSPATH' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$is_active = function_exists( 'jet_form_builder' )
+			|| defined( 'JET_FORM_BUILDER_VERSION' )
+			|| ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'jet-form-builder/jet-form-builder.php' ) );
+
+		if ( ! $is_active ) {
+			return false;
+		}
+
+		return post_type_exists( 'jet-form-builder' );
+	}
+
+	private function validate_request_viewing( array $blueprint ): ?array {
+		$config = $this->get_request_viewing_config( $blueprint );
+
+		if ( empty( $config ) || false === ( $config['enabled'] ?? true ) ) {
+			return null;
+		}
+
+		$contact = $this->get_configured_page( $blueprint, 'contact' );
+		$slug    = $contact['slug'] ?? '';
+		$page    = $slug ? get_page_by_path( $slug ) : null;
+
+		if ( ! $page || false === strpos( $page->post_content, '[factory_request_viewing]' ) ) {
+			return [
+				'status'  => 'error',
+				'message' => 'Request Viewing section missing from Contact page.',
+			];
+		}
+
+		$form_id = absint( $config['jetformbuilder_form_id'] ?? 0 );
+
+		if ( $form_id && ! $this->get_valid_jetformbuilder_form_id( $config ) ) {
+			return [
+				'status'  => 'error',
+				'message' => "Configured JetFormBuilder form missing: {$form_id}",
+			];
+		}
+
+		if ( $this->get_valid_jetformbuilder_form_id( $config ) ) {
+			return [
+				'status'  => 'ok',
+				'message' => 'Request Viewing JetFormBuilder form embedded on Contact page.',
+			];
+		}
+
+		return [
+			'status'  => 'warning',
+			'message' => 'JetFormBuilder missing or no form configured. Request Viewing fallback is rendered.',
+		];
 	}
 
 	private function resolve_frontend_url( $url, string $fallback ): string {
