@@ -1938,10 +1938,11 @@ class Factory_Render_Adapter {
 		$cta_label    = $contact['cta_label'] ?? 'Browse properties';
 		$cta_url      = $this->resolve_frontend_url( $contact['cta_url'] ?? '', '/properties/' );
 
-		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: -40px 0 0; padding: 88px 24px; color: #10201d;">';
+		$html  = '<style>body.page .factory-contact-page ~ .entry-title, body.page .factory-contact-page ~ .page-title, body.page:has(.factory-contact-page) .entry-title, body.page:has(.factory-contact-page) .page-title { display: none !important; }</style>';
+		$html .= '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: #10201d;">';
 		$html .= '<div style="max-width: 920px; margin: 0 auto;">';
 		$html .= '<span style="display: inline-flex; border-radius: 999px; background: #fff; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 18px;">Kyiv agency</span>';
-		$html .= '<h1 style="font-size: clamp(42px, 6vw, 72px); line-height: 1.02; margin: 0 0 18px;">' . esc_html( $title ) . '</h1>';
+		$html .= '<h1 style="font-size: clamp(30px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px;">' . esc_html( $title ) . '</h1>';
 		$html .= '<p style="max-width: 680px; color: #52635f; font-size: 19px; line-height: 1.6; margin: 0 0 34px;">' . esc_html( $text ) . '</p>';
 		$html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 32px;">';
 		$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Phone</strong><span>' . esc_html( $phone ) . '</span></div>';
