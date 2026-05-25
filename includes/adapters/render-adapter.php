@@ -12,6 +12,8 @@ class Factory_Render_Adapter {
 		add_shortcode( 'factory_listing', [ $this, 'render_listing_shortcode' ] );
 		add_shortcode( 'factory_request_viewing', [ $this, 'render_request_viewing_shortcode' ] );
 		add_action( 'template_redirect', [ $this, 'redirect_property_archive' ] );
+		add_filter( 'body_class', [ $this, 'add_contact_page_body_class' ] );
+		add_action( 'wp_head', [ $this, 'print_contact_page_title_styles' ] );
 	}
 
 	public function redirect_property_archive(): void {
@@ -21,6 +23,22 @@ class Factory_Render_Adapter {
 
 		wp_safe_redirect( home_url( '/properties/' ), 302 );
 		exit;
+	}
+
+	public function add_contact_page_body_class( array $classes ): array {
+		if ( $this->is_generated_contact_page_request() ) {
+			$classes[] = 'factory-generated-contact-page';
+		}
+
+		return $classes;
+	}
+
+	public function print_contact_page_title_styles(): void {
+		if ( ! $this->is_generated_contact_page_request() ) {
+			return;
+		}
+
+		echo '<style id="factory-contact-page-title-style">.factory-generated-contact-page .entry-title,.factory-generated-contact-page .page-title,.factory-generated-contact-page .post-title,.factory-generated-contact-page .page-header,.factory-generated-contact-page .entry-header{display:none!important;}</style>' . "\n";
 	}
 
 	public function apply( array $blueprint ): void {
@@ -1832,6 +1850,22 @@ class Factory_Render_Adapter {
 		return is_array( $page ) ? $page : [];
 	}
 
+	private function is_generated_contact_page_request(): bool {
+		if ( ! is_page() ) {
+			return false;
+		}
+
+		$blueprint = factory_get_blueprint();
+		$contact   = $this->get_configured_page( $blueprint, 'contact' );
+		$slug      = is_string( $contact['slug'] ?? null ) ? $contact['slug'] : '';
+
+		if ( '' === $slug ) {
+			return false;
+		}
+
+		return is_page( $slug );
+	}
+
 	private function get_configured_page_content( array $blueprint, string $page_key ): string {
 		if ( 'home' === $page_key ) {
 			return $this->render_home_page_content( $blueprint );
@@ -1938,8 +1972,7 @@ class Factory_Render_Adapter {
 		$cta_label    = $contact['cta_label'] ?? 'Browse properties';
 		$cta_url      = $this->resolve_frontend_url( $contact['cta_url'] ?? '', '/properties/' );
 
-		$html  = '<style>body.page .factory-contact-page ~ .entry-title, body.page .factory-contact-page ~ .page-title, body.page:has(.factory-contact-page) .entry-title, body.page:has(.factory-contact-page) .page-title { display: none !important; }</style>';
-		$html .= '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: #10201d;">';
+		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: #10201d;">';
 		$html .= '<div style="max-width: 920px; margin: 0 auto;">';
 		$html .= '<span style="display: inline-flex; border-radius: 999px; background: #fff; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 18px;">Kyiv agency</span>';
 		$html .= '<h1 style="font-size: clamp(30px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px;">' . esc_html( $title ) . '</h1>';
