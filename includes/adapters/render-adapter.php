@@ -38,7 +38,7 @@ class Factory_Render_Adapter {
 			return;
 		}
 
-		echo '<style id="factory-contact-page-title-style">.factory-generated-contact-page .entry-title,.factory-generated-contact-page .page-title,.factory-generated-contact-page .post-title,.factory-generated-contact-page .page-header,.factory-generated-contact-page .entry-header{display:none!important;}</style>' . "\n";
+		echo '<style id="factory-contact-page-title-style">.factory-generated-contact-page .entry-title,.factory-generated-contact-page .page-title,.factory-generated-contact-page .post-title,.factory-generated-contact-page .page-header,.factory-generated-contact-page .entry-header,.factory-generated-contact-page .site-main > h1,.factory-generated-contact-page main > h1{display:none!important;}</style>' . "\n";
 	}
 
 	public function apply( array $blueprint ): void {
