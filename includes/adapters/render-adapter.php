@@ -71,6 +71,12 @@ class Factory_Render_Adapter {
 		if ( is_array( $navigation_result ) ) {
 			$this->execution_results[] = $navigation_result;
 		}
+
+		$request_viewing_result = $this->upsert_request_viewing_form( $blueprint );
+
+		if ( is_array( $request_viewing_result ) ) {
+			$this->execution_results[] = $request_viewing_result;
+		}
 	}
 
 	public function get_execution_results(): array {
@@ -165,6 +171,12 @@ class Factory_Render_Adapter {
 
 		if ( is_array( $navigation_plan ) ) {
 			$plan[] = $navigation_plan;
+		}
+
+		$request_viewing_plan = $this->get_request_viewing_form_plan_item( $blueprint );
+
+		if ( is_array( $request_viewing_plan ) ) {
+			$plan[] = $request_viewing_plan;
 		}
 
 		return $plan;
@@ -2004,7 +2016,7 @@ class Factory_Render_Adapter {
 		$title        = is_string( $config['title'] ?? null ) && '' !== trim( $config['title'] )
 			? trim( $config['title'] )
 			: 'Request a Viewing';
-		$form_id      = $this->get_valid_jetformbuilder_form_id( $config );
+		$form_id      = $this->resolve_request_viewing_form_id( $config );
 		$property     = $this->get_request_viewing_property_context();
 
 		ob_start();
@@ -2124,6 +2136,22 @@ class Factory_Render_Adapter {
 		return is_array( $config ) ? $config : [];
 	}
 
+	private function is_request_viewing_enabled( array $blueprint ): bool {
+		$config = $this->get_request_viewing_config( $blueprint );
+
+		return ! empty( $config ) && false !== ( $config['enabled'] ?? true );
+	}
+
+	private function resolve_request_viewing_form_id( array $config ): int {
+		$configured_id = absint( $config['jetformbuilder_form_id'] ?? 0 );
+
+		if ( $configured_id ) {
+			return $this->get_valid_jetformbuilder_form_id( $config );
+		}
+
+		return $this->find_generated_request_viewing_form();
+	}
+
 	private function get_valid_jetformbuilder_form_id( array $config ): int {
 		$form_id = absint( $config['jetformbuilder_form_id'] ?? 0 );
 
@@ -2154,6 +2182,358 @@ class Factory_Render_Adapter {
 		}
 
 		return post_type_exists( 'jet-form-builder' );
+	}
+
+	private function upsert_request_viewing_form( array $blueprint ): ?array {
+		if ( ! $this->is_request_viewing_enabled( $blueprint ) ) {
+			return null;
+		}
+
+		$configured_id = absint( $this->get_request_viewing_config( $blueprint )['jetformbuilder_form_id'] ?? 0 );
+
+		if ( $configured_id || ! $this->is_jetformbuilder_available() ) {
+			return null;
+		}
+
+		$existing_id  = $this->find_generated_request_viewing_form();
+		$target_state = $this->get_request_viewing_generated_form_state();
+		$action       = $existing_id ? 'update' : 'create';
+
+		if ( $existing_id ) {
+			$current_state = $this->get_current_request_viewing_form_state( $existing_id );
+			$diff          = factory_diff_arrays( $current_state, $target_state );
+
+			if ( empty( $diff ) ) {
+				return $this->execution_item(
+					'ok',
+					'skip',
+					'request_viewing',
+					'Request Viewing form up-to-date.',
+					'form'
+				);
+			}
+
+			$post_id = wp_update_post(
+				[
+					'ID'           => $existing_id,
+					'post_type'    => 'jet-form-builder',
+					'post_title'   => $target_state['post_title'],
+					'post_name'    => $target_state['post_name'],
+					'post_status'  => $target_state['post_status'],
+					'post_content' => $target_state['post_content'],
+				],
+				true
+			);
+		} else {
+			$post_id = wp_insert_post(
+				[
+					'post_type'    => 'jet-form-builder',
+					'post_title'   => $target_state['post_title'],
+					'post_name'    => $target_state['post_name'],
+					'post_status'  => $target_state['post_status'],
+					'post_content' => $target_state['post_content'],
+				],
+				true
+			);
+		}
+
+		if ( is_wp_error( $post_id ) || ! $post_id ) {
+			return $this->execution_item(
+				'error',
+				$action,
+				'request_viewing',
+				'Request Viewing form sync failed.',
+				'form'
+			);
+		}
+
+		$this->sync_request_viewing_form_meta( (int) $post_id, $target_state['meta'] );
+
+		return $this->execution_item(
+			'ok',
+			$action,
+			'request_viewing',
+			'create' === $action
+				? 'Request Viewing form created.'
+				: 'Request Viewing form updated.',
+			'form'
+		);
+	}
+
+	private function get_request_viewing_form_plan_item( array $blueprint ): ?array {
+		if ( ! $this->is_request_viewing_enabled( $blueprint ) ) {
+			return null;
+		}
+
+		$config        = $this->get_request_viewing_config( $blueprint );
+		$configured_id = absint( $config['jetformbuilder_form_id'] ?? 0 );
+
+		if ( $configured_id ) {
+			if ( $this->get_valid_jetformbuilder_form_id( $config ) ) {
+				return [
+					'action'  => 'skip',
+					'type'    => 'form',
+					'entity'  => 'request_viewing',
+					'message' => "Configured Request Viewing JetFormBuilder form ready: {$configured_id}",
+					'diff'    => [],
+				];
+			}
+
+			return [
+				'action'  => 'error',
+				'type'    => 'form',
+				'entity'  => 'request_viewing',
+				'message' => "Configured JetFormBuilder form missing: {$configured_id}",
+				'diff'    => [],
+			];
+		}
+
+		if ( ! $this->is_jetformbuilder_available() ) {
+			return [
+				'action'  => 'skip',
+				'type'    => 'form',
+				'entity'  => 'request_viewing',
+				'message' => 'Request Viewing email fallback will be used.',
+				'diff'    => [],
+			];
+		}
+
+		$existing_id = $this->find_generated_request_viewing_form();
+
+		if ( ! $existing_id ) {
+			return [
+				'action'  => 'create',
+				'type'    => 'form',
+				'entity'  => 'request_viewing',
+				'message' => 'Create Request Viewing JetFormBuilder form.',
+				'diff'    => [],
+			];
+		}
+
+		$current_state = $this->get_current_request_viewing_form_state( $existing_id );
+		$target_state  = $this->get_request_viewing_generated_form_state();
+		$diff          = factory_diff_arrays( $current_state, $target_state );
+
+		if ( empty( $diff ) ) {
+			return [
+				'action'  => 'skip',
+				'type'    => 'form',
+				'entity'  => 'request_viewing',
+				'message' => 'Request Viewing form up-to-date.',
+				'diff'    => [],
+			];
+		}
+
+		return [
+			'action'  => 'update',
+			'type'    => 'form',
+			'entity'  => 'request_viewing',
+			'message' => 'Update Request Viewing JetFormBuilder form.',
+			'diff'    => $diff,
+		];
+	}
+
+	private function find_generated_request_viewing_form(): int {
+		if ( ! $this->is_jetformbuilder_available() ) {
+			return 0;
+		}
+
+		$posts = get_posts(
+			[
+				'post_type'      => 'jet-form-builder',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					[
+						'key'   => '_factory_generated',
+						'value' => '1',
+					],
+					[
+						'key'   => '_factory_form_key',
+						'value' => 'request_viewing',
+					],
+					[
+						'key'   => '_factory_form_provider',
+						'value' => 'jetformbuilder',
+					],
+				],
+			]
+		);
+
+		if ( ! empty( $posts ) ) {
+			return (int) $posts[0];
+		}
+
+		$post = get_page_by_path( 'request-viewing', OBJECT, 'jet-form-builder' );
+
+		if (
+			$post
+			&& 'publish' === $post->post_status
+			&& '1' === (string) get_post_meta( $post->ID, '_factory_generated', true )
+			&& 'request_viewing' === (string) get_post_meta( $post->ID, '_factory_form_key', true )
+			&& 'jetformbuilder' === (string) get_post_meta( $post->ID, '_factory_form_provider', true )
+		) {
+			return (int) $post->ID;
+		}
+
+		return 0;
+	}
+
+	private function get_request_viewing_generated_form_slug(): string {
+		$generated_id = $this->find_generated_request_viewing_form();
+
+		if ( $generated_id ) {
+			$post = get_post( $generated_id );
+
+			if ( $post && '' !== $post->post_name ) {
+				return $post->post_name;
+			}
+		}
+
+		$post = get_page_by_path( 'request-viewing', OBJECT, 'jet-form-builder' );
+
+		if ( $post && '1' !== (string) get_post_meta( $post->ID, '_factory_generated', true ) ) {
+			return 'factory-request-viewing';
+		}
+
+		return 'request-viewing';
+	}
+
+	private function get_request_viewing_generated_form_state(): array {
+		return [
+			'post_title'   => 'Request Viewing',
+			'post_name'    => $this->get_request_viewing_generated_form_slug(),
+			'post_status'  => 'publish',
+			'post_content' => $this->get_request_viewing_generated_form_content(),
+			'meta'         => $this->get_request_viewing_generated_form_meta(),
+		];
+	}
+
+	private function get_request_viewing_generated_form_content(): string {
+		return '<!-- wp:jet-forms/welcome /-->' . "\n\n"
+			. '<!-- wp:jet-forms/hidden-field {"field_value":"query_var","query_var_key":"factory_property","name":"property_slug"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/text-field {"label":"Name","name":"name"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/text-field {"field_type":"email","label":"Email","name":"email"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/text-field {"field_type":"tel","label":"Phone","name":"phone"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/date-field {"is_timestamp":true,"label":"Preferred time","name":"preferred_time"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/textarea-field {"label":"Message","name":"message"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/submit-field /-->';
+	}
+
+	private function get_request_viewing_generated_form_meta(): array {
+		return [
+			'_jf_actions'             => [
+				[
+					'settings'   => [
+						'save_record' => [
+							'save_user_data' => false,
+						],
+					],
+					'type'       => 'save_record',
+					'conditions' => [],
+					'events'     => [],
+					'index'      => 0,
+					'chosen'     => false,
+					'selected'   => false,
+				],
+				[
+					'settings'   => [
+						'send_email' => [
+							'mail_to'      => 'admin',
+							'content_type' => 'text/plain',
+							'content'      => "%property_slug%\n%name%\n%email%\n%phone%\n%preferred_time%\n%message%",
+						],
+					],
+					'type'       => 'send_email',
+					'conditions' => [],
+					'events'     => [],
+					'index'      => 1,
+					'chosen'     => false,
+					'selected'   => false,
+				],
+			],
+			'_jf_args'                => [
+				'load_nonce' => 'render',
+			],
+			'_jf_messages'            => [],
+			'_jf_preset'              => [],
+			'_jf_recaptcha'           => [],
+			'_jf_validation'          => [],
+			'_factory_generated'      => '1',
+			'_factory_form_key'       => 'request_viewing',
+			'_factory_form_provider'  => 'jetformbuilder',
+		];
+	}
+
+	private function get_current_request_viewing_form_state( int $form_id ): array {
+		$post = get_post( $form_id );
+		$meta = [];
+
+		foreach ( $this->get_request_viewing_generated_form_meta() as $key => $value ) {
+			$meta[ $key ] = $this->normalize_array_for_diff( get_post_meta( $form_id, $key, true ) );
+		}
+
+		return [
+			'post_title'   => $post ? $post->post_title : '',
+			'post_name'    => $post ? $post->post_name : '',
+			'post_status'  => $post ? $post->post_status : '',
+			'post_content' => $post ? $post->post_content : '',
+			'meta'         => $meta,
+		];
+	}
+
+	private function sync_request_viewing_form_meta( int $form_id, array $meta ): void {
+		foreach ( $meta as $key => $value ) {
+			update_post_meta( $form_id, $key, $value );
+		}
+	}
+
+	private function normalize_array_for_diff( $value ) {
+		if ( is_object( $value ) ) {
+			$value = (array) $value;
+		}
+
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+
+		ksort( $value );
+
+		foreach ( $value as $key => $item ) {
+			$value[ $key ] = $this->normalize_array_for_diff( $item );
+		}
+
+		return $value;
+	}
+
+	private function validate_generated_request_viewing_form( array $config ): ?array {
+		$form_id = $this->find_generated_request_viewing_form();
+
+		if ( ! $form_id ) {
+			$provider = is_string( $config['provider'] ?? null ) ? strtolower( $config['provider'] ) : 'auto';
+
+			return [
+				'status'  => 'jetformbuilder' === $provider ? 'error' : 'warning',
+				'message' => 'Generated Request Viewing JetFormBuilder form missing.',
+			];
+		}
+
+		$current_state = $this->get_current_request_viewing_form_state( $form_id );
+		$target_state  = $this->get_request_viewing_generated_form_state();
+		$diff          = factory_diff_arrays( $current_state, $target_state );
+
+		if ( ! empty( $diff ) ) {
+			return [
+				'status'  => 'warning',
+				'message' => 'Generated Request Viewing JetFormBuilder form needs update.',
+			];
+		}
+
+		return [
+			'status'  => 'ok',
+			'message' => "Generated Request Viewing JetFormBuilder form ready: {$form_id}",
+		];
 	}
 
 	private function validate_request_viewing( array $blueprint ): ?array {
@@ -2188,6 +2568,10 @@ class Factory_Render_Adapter {
 				'status'  => 'ok',
 				'message' => 'Request Viewing JetFormBuilder form embedded on Contact page.',
 			];
+		}
+
+		if ( $this->is_jetformbuilder_available() ) {
+			return $this->validate_generated_request_viewing_form( $config );
 		}
 
 		return [
