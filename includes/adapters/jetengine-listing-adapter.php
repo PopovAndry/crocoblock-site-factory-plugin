@@ -63,6 +63,7 @@ class Factory_JetEngine_Listing_Adapter {
 		$slug      = $listing['slug'] ?? '';
 		$title     = $listing['title'] ?? $slug;
 		$post_type = $listing['post_type'] ?? '';
+		$query_slug = $this->get_listing_query_slug( $listing );
 
 		if ( ! $slug || ! $post_type ) {
 			$plan[] = [
@@ -70,6 +71,17 @@ class Factory_JetEngine_Listing_Adapter {
 				'type'    => 'listing',
 				'entity'  => $title ?: 'unknown',
 				'message' => 'Listing slug or post_type is missing.',
+			];
+
+			continue;
+		}
+
+		if ( $query_slug && ! $this->resolve_jetengine_query_row_id( $query_slug ) ) {
+			$plan[] = [
+				'action'  => 'error',
+				'type'    => 'listing',
+				'entity'  => $title,
+				'message' => "Listing query missing: {$query_slug}",
 			];
 
 			continue;
@@ -91,7 +103,7 @@ class Factory_JetEngine_Listing_Adapter {
 			continue;
 		}
 
-		$current_state = $this->get_current_listing_state( $existing );
+		$current_state = $this->get_current_listing_state( $existing, $listing );
 		$diff          = factory_diff_arrays( $current_state, $target_state );
 
 		if ( empty( $diff ) ) {
@@ -135,8 +147,18 @@ public function validate( array $blueprint ): array {
 			continue;
 		}
 
+		$query_slug = $this->get_listing_query_slug( $listing );
+
+		if ( $query_slug && ! $this->resolve_jetengine_query_row_id( $query_slug ) ) {
+			$results[] = [
+				'status'  => 'error',
+				'message' => "Listing query missing: {$query_slug}",
+			];
+			continue;
+		}
+
 		$content       = $this->generate_blocks( $listing );
-		$current_state = $this->get_current_listing_state( $existing );
+		$current_state = $this->get_current_listing_state( $existing, $listing );
 		$target_state  = $this->get_target_listing_state( $listing, $content );
 
 		$diff = factory_diff_arrays( $current_state, $target_state );
@@ -162,6 +184,7 @@ public function validate( array $blueprint ): array {
 		$slug      = $listing['slug'] ?? '';
 		$title     = $listing['title'] ?? $slug;
 		$post_type = $listing['post_type'] ?? '';
+		$query_slug = $this->get_listing_query_slug( $listing );
 
 		if ( ! $slug || ! $post_type ) {
 			$this->warn( 'Listing slug or post_type is missing.' );
@@ -174,13 +197,24 @@ public function validate( array $blueprint ): array {
 			);
 		}
 
+		if ( $query_slug && ! $this->resolve_jetengine_query_row_id( $query_slug ) ) {
+			$this->warn( "Listing query missing: {$query_slug}" );
+
+			return $this->execution_item(
+				'error',
+				'update',
+				$title,
+				"Listing query missing: {$query_slug}"
+			);
+		}
+
 		$content  = $this->generate_blocks( $listing );
 		$existing = $this->find_listing_by_slug( $slug );
 
 		$target_state = $this->get_target_listing_state( $listing, $content );
 
 		if ( $existing ) {
-			$current_state = $this->get_current_listing_state( $existing );
+			$current_state = $this->get_current_listing_state( $existing, $listing );
 			$diff          = factory_diff_arrays( $current_state, $target_state );
 
 			if ( empty( $diff ) ) {
@@ -274,18 +308,19 @@ public function validate( array $blueprint ): array {
 	private function sync_listing_meta( int $post_id, array $listing ): void {
 		$post_type = $listing['post_type'] ?? '';
 		$slug      = $listing['slug'] ?? '';
+		$source    = $this->get_listing_source_config( $listing );
 
 		update_post_meta( $post_id, '_entry_type', 'listing' );
 		update_post_meta( $post_id, '_listing_type', 'blocks' );
 
 		update_post_meta( $post_id, '_listing_data', [
-			'source'    => 'posts',
+			'source'    => $source['source'],
 			'post_type' => $post_type,
 			'tax'       => 'category',
 		] );
 
 		update_post_meta( $post_id, '_elementor_page_settings', [
-			'listing_source'               => 'posts',
+			'listing_source'               => $source['source'],
 			'listing_post_type'            => $post_type,
 			'listing_tax'                  => 'category',
 			'repeater_source'              => 'jet_engine',
@@ -300,11 +335,15 @@ public function validate( array $blueprint ): array {
 			'_post_id'                     => 'current_id',
 		] );
 
+		if ( $source['query_id'] > 0 ) {
+			update_post_meta( $post_id, '_query_id', $source['query_id'] );
+		}
+
 		update_post_meta( $post_id, '_factory_listing_key', $slug );
 	}
 
-	private function get_current_listing_state( WP_Post $post ): array {
-		return [
+	private function get_current_listing_state( WP_Post $post, array $listing = [] ): array {
+		$state = [
 			'title'       => $post->post_title,
 			'slug'        => $post->post_name,
 			'content'     => $post->post_content,
@@ -312,25 +351,97 @@ public function validate( array $blueprint ): array {
 			'listing_type'=> get_post_meta( $post->ID, '_listing_type', true ),
 			'listing_data'=> $this->normalize_array_for_diff( get_post_meta( $post->ID, '_listing_data', true ) ),
 		];
+
+		if ( $this->get_listing_query_slug( $listing ) ) {
+			$settings = get_post_meta( $post->ID, '_elementor_page_settings', true );
+			$settings = is_array( $settings ) ? $settings : [];
+
+			$state['listing_source'] = $settings['listing_source'] ?? '';
+			$state['query_id']       = absint( get_post_meta( $post->ID, '_query_id', true ) );
+		}
+
+		return $state;
 	}
 
 	private function get_target_listing_state( array $listing, string $content ): array {
 		$slug      = $listing['slug'] ?? '';
 		$title     = $listing['title'] ?? $slug;
 		$post_type = $listing['post_type'] ?? '';
+		$source    = $this->get_listing_source_config( $listing );
 
-		return [
+		$state = [
 			'title'       => $title,
 			'slug'        => $slug,
 			'content'     => $content,
 			'entry_type'  => 'listing',
 			'listing_type'=> 'blocks',
 			'listing_data'=> $this->normalize_array_for_diff( [
-				'source'    => 'posts',
+				'source'    => $source['source'],
 				'post_type' => $post_type,
 				'tax'       => 'category',
 			] ),
 		];
+
+		if ( $this->get_listing_query_slug( $listing ) ) {
+			$state['listing_source'] = $source['source'];
+			$state['query_id']       = $source['query_id'];
+		}
+
+		return $state;
+	}
+
+	private function get_listing_source_config( array $listing ): array {
+		$query_slug = $this->get_listing_query_slug( $listing );
+		$query_id   = $query_slug ? $this->resolve_jetengine_query_row_id( $query_slug ) : 0;
+
+		if ( $query_id > 0 ) {
+			return [
+				'source'   => 'query',
+				'query_id' => $query_id,
+			];
+		}
+
+		return [
+			'source'   => 'posts',
+			'query_id' => 0,
+		];
+	}
+
+	private function get_listing_query_slug( array $listing ): string {
+		return sanitize_key( $listing['query'] ?? '' );
+	}
+
+	private function get_factory_query_id_from_slug( string $slug ): string {
+		return 'factory_' . sanitize_key( $slug );
+	}
+
+	private function resolve_jetengine_query_row_id( string $query_slug ): int {
+		if ( ! function_exists( 'jet_engine' ) || ! class_exists( 'Jet_Engine\\Query_Builder\\Manager' ) ) {
+			return 0;
+		}
+
+		$manager = \Jet_Engine\Query_Builder\Manager::instance();
+
+		if ( empty( $manager->data ) || empty( $manager->data->db ) ) {
+			return 0;
+		}
+
+		$factory_query_id = $this->get_factory_query_id_from_slug( $query_slug );
+		$rows             = $manager->data->db->query( $manager->data->table, [ 'status' => 'query' ], null, false );
+
+		if ( ! is_array( $rows ) ) {
+			return 0;
+		}
+
+		foreach ( $rows as $row ) {
+			$args = maybe_unserialize( $row['args'] ?? [] );
+
+			if ( is_array( $args ) && ( $args['query_id'] ?? '' ) === $factory_query_id ) {
+				return absint( $row['id'] ?? 0 );
+			}
+		}
+
+		return 0;
 	}
 
 	private function normalize_array_for_diff( $value ): array {

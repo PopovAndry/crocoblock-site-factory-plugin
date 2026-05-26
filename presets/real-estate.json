@@ -831,6 +831,7 @@
       "slug": "property-card",
       "title": "Property Card",
       "post_type": "property",
+      "query": "real_estate_properties",
       "layout": [
         { "type": "title" },
         { "type": "meta", "key": "price", "label": "Price", "format": "currency" },
