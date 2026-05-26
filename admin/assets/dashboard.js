@@ -23,6 +23,7 @@
 		betaPlan: null,
 		betaProductPlan: null,
 		lastActionAt: '',
+		advancedOpen: false,
 	};
 
 	function endpoint( path ) {
@@ -385,7 +386,7 @@
 
 		return [
 			'<section class="factory-card">',
-				'<div class="factory-card-heading"><h2>Latest Run Summary</h2>' + badge( run.status ) + '</div>',
+				'<div class="factory-card-heading"><h2>Latest Validation Summary</h2>' + badge( run.status ) + '</div>',
 				'<dl class="factory-definition-list">',
 					'<dt>File</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 					'<dt>Timestamp</dt><dd>' + escapeHtml( run.timestamp || '-' ) + '</dd>',
@@ -517,6 +518,32 @@
 		].join( '' );
 	}
 
+	function renderAdvancedProof() {
+		const expanded = Boolean( state.advancedOpen );
+
+		return [
+			'<section class="factory-advanced-panel">',
+				'<div class="factory-advanced-header">',
+					'<div>',
+						'<span>Advanced</span>',
+						'<h2>Developer proof</h2>',
+						'<p>Execution trace, validation checks, blueprint data, run history, and adapter diagnostics.</p>',
+					'</div>',
+					'<button type="button" class="button factory-advanced-toggle" data-factory-toggle-advanced aria-expanded="' + ( expanded ? 'true' : 'false' ) + '">',
+						expanded ? 'Hide developer proof' : 'Show developer proof',
+					'</button>',
+				'</div>',
+				expanded
+					? '<div class="factory-advanced-body">' +
+						renderRunsTable() +
+						renderSelectedRun() +
+						renderAdapters() +
+					'</div>'
+					: '',
+			'</section>',
+		].join( '' );
+	}
+
 	function render() {
 		root.innerHTML = [
 			renderHeader(),
@@ -525,10 +552,8 @@
 			'<div class="factory-grid">',
 				renderSystemStatus(),
 				renderLatestRun(),
-				renderRunsTable(),
-				renderSelectedRun(),
-				renderAdapters(),
 			'</div>',
+			renderAdvancedProof(),
 		].join( '' );
 
 		const blueprintPre = root.querySelector( '.factory-blueprint pre' );
@@ -545,6 +570,13 @@
 				if ( file ) {
 					loadRunDetails( file );
 				}
+			} );
+		} );
+
+		root.querySelectorAll( '[data-factory-toggle-advanced]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				state.advancedOpen = ! state.advancedOpen;
+				render();
 			} );
 		} );
 
