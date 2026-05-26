@@ -2191,8 +2191,8 @@ class Factory_Render_Adapter {
 		}
 
 		return [
-			'status'  => 'warning',
-			'message' => 'JetFormBuilder missing or no form configured. Request Viewing fallback is rendered.',
+			'status'  => 'ok',
+			'message' => 'Request Viewing fallback rendered on Contact page. JetFormBuilder is optional for this beta flow.',
 		];
 	}
 
