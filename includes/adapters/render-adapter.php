@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -2077,8 +2077,8 @@ class Factory_Render_Adapter {
 			? "Request a viewing: {$property_title}"
 			: 'Request a property viewing';
 		$body           = '' !== $property_title
-			? "Hello,%0D%0A%0D%0AI would like to request a viewing for {$property_title}.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred time:%0D%0AMessage:"
-			: "Hello,%0D%0A%0D%0AI would like to request a property viewing.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred time:%0D%0AMessage:";
+			? "Hello,%0D%0A%0D%0AI would like to request a viewing for {$property_title}.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred date:%0D%0AMessage:"
+			: "Hello,%0D%0A%0D%0AI would like to request a property viewing.%0D%0A%0D%0AName:%0D%0APhone:%0D%0APreferred date:%0D%0AMessage:";
 		$mailto         = add_query_arg(
 			[
 				'subject' => $subject,
