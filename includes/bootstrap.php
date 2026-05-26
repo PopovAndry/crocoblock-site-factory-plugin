@@ -9,6 +9,7 @@ require_once __DIR__ . '/adapters/plugin-adapter.php';
 require_once __DIR__ . '/adapters/wp-core-adapter.php';
 require_once __DIR__ . '/adapters/theme-adapter.php';
 require_once __DIR__ . '/adapters/jetengine-adapter.php';
+require_once __DIR__ . '/adapters/jetengine-query-builder-adapter.php';
 require_once __DIR__ . '/adapters/jetengine-listing-adapter.php';
 require_once __DIR__ . '/adapters/render-adapter.php';
 require_once __DIR__ . '/adapters/single-adapter.php';

@@ -13,6 +13,7 @@ class Factory_Adapter_Registry {
 			'taxonomy' => Factory_Taxonomy_Adapter::class,
 			'core'     => Factory_WP_Core_Adapter::class,
 			'meta'     => Factory_JetEngine_Adapter::class,
+			'queries'  => Factory_JetEngine_Query_Builder_Adapter::class,
 			'listings' => Factory_JetEngine_Listing_Adapter::class,
 			'render'   => Factory_Render_Adapter::class,
 			'single'   => Factory_Single_Adapter::class,
@@ -27,6 +28,7 @@ class Factory_Adapter_Registry {
 			new Factory_Taxonomy_Adapter(),
 			new Factory_WP_Core_Adapter(),
 			new Factory_JetEngine_Adapter(),
+			new Factory_JetEngine_Query_Builder_Adapter(),
 			new Factory_JetEngine_Listing_Adapter(),
 			new Factory_Render_Adapter(),
 			new Factory_Single_Adapter(),
@@ -50,7 +52,14 @@ class Factory_Adapter_Registry {
 			Factory_JetEngine_Listing_Adapter::class => [
 				Factory_WP_Core_Adapter::class,
 				Factory_JetEngine_Adapter::class,
+				Factory_JetEngine_Query_Builder_Adapter::class,
 				Factory_JetEngine_Listing_Adapter::class,
+			],
+
+			Factory_JetEngine_Query_Builder_Adapter::class => [
+				Factory_WP_Core_Adapter::class,
+				Factory_JetEngine_Adapter::class,
+				Factory_JetEngine_Query_Builder_Adapter::class,
 			],
 
 			Factory_Render_Adapter::class => [

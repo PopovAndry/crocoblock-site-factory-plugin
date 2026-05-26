@@ -167,6 +167,19 @@
       ]
     }
   },
+  "queries": [
+    {
+      "slug": "real_estate_properties",
+      "label": "Real Estate Properties",
+      "provider": "jetengine",
+      "type": "posts",
+      "post_type": "property",
+      "post_status": "publish",
+      "posts_per_page": 30,
+      "orderby": "date",
+      "order": "DESC"
+    }
+  ],
   "cpt": [
     {
       "slug": "property",
