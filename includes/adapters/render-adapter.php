@@ -2416,7 +2416,7 @@ class Factory_Render_Adapter {
 			. '<!-- wp:jet-forms/text-field {"label":"Name","name":"name"} /-->' . "\n\n"
 			. '<!-- wp:jet-forms/text-field {"field_type":"email","label":"Email","name":"email"} /-->' . "\n\n"
 			. '<!-- wp:jet-forms/text-field {"field_type":"tel","label":"Phone","name":"phone"} /-->' . "\n\n"
-			. '<!-- wp:jet-forms/date-field {"is_timestamp":true,"label":"Preferred time","name":"preferred_time"} /-->' . "\n\n"
+			. '<!-- wp:jet-forms/date-field {"is_timestamp":true,"label":"Preferred date","name":"preferred_time"} /-->' . "\n\n"
 			. '<!-- wp:jet-forms/textarea-field {"label":"Message","name":"message"} /-->' . "\n\n"
 			. '<!-- wp:jet-forms/submit-field /-->';
 	}
