@@ -12,6 +12,7 @@ This plugin packages the current WordPress/Crocoblock automation engine as a nor
 - Home page at `/`
 - Properties catalog at `/properties/`
 - GET-based property filters
+- Experimental native JetSmartFilters proof page at `/properties-native/`
 - Native `/property/` archive redirect to `/properties/`
 - Single property pages
 - Contact page at `/contact/`
@@ -83,7 +84,7 @@ wp factory apply wp-content/plugins/crocoblock-site-factory-plugin/presets/real-
 
 ## Beta Scope
 
-This repository is intentionally plugin-first and beta-focused. It does not include SaaS provisioning, external deployment, native JetSmartFilters frontend rendering, billing, queues, or rollback UI.
+This repository is intentionally plugin-first and beta-focused. It does not include SaaS provisioning, external deployment, promoted native JetSmartFilters rendering on the main catalog, billing, queues, or rollback UI.
 
 ## Milestones
 
