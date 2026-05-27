@@ -83,4 +83,8 @@ wp factory apply wp-content/plugins/crocoblock-site-factory-plugin/presets/real-
 
 ## Beta Scope
 
-This repository is intentionally plugin-first and beta-focused. It does not include SaaS provisioning, external deployment, JetSmartFilters integration, JetFormBuilder integration, billing, queues, or rollback UI.
+This repository is intentionally plugin-first and beta-focused. It does not include SaaS provisioning, external deployment, native JetSmartFilters frontend rendering, billing, queues, or rollback UI.
+
+## Milestones
+
+- [v0.2 milestone](docs/v0.2-milestone.md)
