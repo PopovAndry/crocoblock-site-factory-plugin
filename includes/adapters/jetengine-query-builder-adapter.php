@@ -308,7 +308,7 @@ class Factory_JetEngine_Query_Builder_Adapter {
 	}
 
 	private function get_target_args( array $query ): array {
-		return [
+		$args = [
 			'query_type'      => 'posts',
 			'query_id'        => $this->get_query_id( $query ),
 			'description'     => $this->get_description( $query ),
@@ -325,6 +325,15 @@ class Factory_JetEngine_Query_Builder_Adapter {
 			],
 			'__dynamic_posts' => [],
 		];
+
+		if ( ! empty( $query['native_filters'] ) ) {
+			$args['posts']['tax_query']  = [];
+			$args['posts']['meta_query'] = [];
+			$args['posts']['date_query'] = [];
+			$args['cache_query']         = false;
+		}
+
+		return $args;
 	}
 
 	private function get_comparable_args( array $args ): array {
@@ -334,6 +343,7 @@ class Factory_JetEngine_Query_Builder_Adapter {
 			'description'     => $args['description'] ?? '',
 			'posts'           => $args['posts'] ?? [],
 			'__dynamic_posts' => $args['__dynamic_posts'] ?? [],
+			'cache_query'     => (bool) ( $args['cache_query'] ?? false ),
 		];
 	}
 
@@ -356,6 +366,8 @@ class Factory_JetEngine_Query_Builder_Adapter {
 			$queries[] = [
 				'slug'           => $slug,
 				'label'          => sanitize_text_field( $query['label'] ?? $slug ),
+				'query_id'       => sanitize_key( $query['query_id'] ?? '' ),
+				'native_filters' => filter_var( $query['native_filters'] ?? false, FILTER_VALIDATE_BOOLEAN ),
 				'provider'       => 'jetengine',
 				'type'           => 'posts',
 				'post_type'      => sanitize_key( $query['post_type'] ?? 'post' ),
@@ -404,6 +416,10 @@ class Factory_JetEngine_Query_Builder_Adapter {
 	}
 
 	private function get_query_id( array $query ): string {
+		if ( ! empty( $query['query_id'] ) ) {
+			return $query['query_id'];
+		}
+
 		return self::QUERY_ID_PREFIX . $query['slug'];
 	}
 

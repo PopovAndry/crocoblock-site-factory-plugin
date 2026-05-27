@@ -52,7 +52,7 @@ class Factory_Render_Adapter {
 			}
 		}
 
-		foreach ( [ 'home', 'contact' ] as $page_key ) {
+		foreach ( [ 'home', 'native_filters', 'contact' ] as $page_key ) {
 			$result = $this->upsert_configured_page( $blueprint, $page_key );
 
 			if ( is_array( $result ) ) {
@@ -153,7 +153,7 @@ class Factory_Render_Adapter {
 			];
 		}
 
-		foreach ( [ 'home', 'contact' ] as $page_key ) {
+		foreach ( [ 'home', 'native_filters', 'contact' ] as $page_key ) {
 			$page_plan = $this->get_configured_page_plan_item( $blueprint, $page_key );
 
 			if ( is_array( $page_plan ) ) {
@@ -203,7 +203,7 @@ class Factory_Render_Adapter {
 			);
 		}
 
-		foreach ( [ 'home', 'contact' ] as $page_key ) {
+		foreach ( [ 'home', 'native_filters', 'contact' ] as $page_key ) {
 			$page_check = $this->validate_configured_page( $blueprint, $page_key );
 
 			if ( is_array( $page_check ) ) {
@@ -1883,6 +1883,10 @@ class Factory_Render_Adapter {
 			return $this->render_home_page_content( $blueprint );
 		}
 
+		if ( 'native_filters' === $page_key ) {
+			return $this->render_native_filters_page_content( $blueprint );
+		}
+
 		if ( 'contact' === $page_key ) {
 			return $this->render_contact_page_content( $blueprint );
 		}
@@ -1969,6 +1973,75 @@ class Factory_Render_Adapter {
 		$html .= '</div>';
 
 		return $html;
+	}
+
+	private function render_native_filters_page_content( array $blueprint ): string {
+		$page          = $this->get_configured_page( $blueprint, 'native_filters' );
+		$style_tokens  = $this->get_site_style_tokens( $blueprint );
+		$query_id      = sanitize_key( $page['provider_query_id'] ?? 'native_list' );
+		$query_slug    = sanitize_key( $page['query'] ?? '' );
+		$listing_slug  = sanitize_key( $page['listing'] ?? '' );
+		$listing_id    = $this->find_jetengine_listing_id( $listing_slug );
+		$query_row_id  = $this->resolve_jetengine_query_row_id( $query_slug, $query_id );
+		$filter_keys   = is_array( $page['filters'] ?? null ) ? $page['filters'] : [];
+		$filter_blocks = [];
+
+		foreach ( $filter_keys as $filter_key ) {
+			$filter_id = $this->find_jetsmartfilters_filter_id( sanitize_key( $filter_key ) );
+
+			if ( $filter_id > 0 ) {
+				$filter_blocks[] = $this->render_jetsmartfilters_select_block( $filter_id, $query_id );
+			}
+		}
+
+		$listing_block = '';
+
+		if ( $listing_id > 0 && $query_row_id > 0 ) {
+			$listing_block = '<!-- wp:jet-engine/listing-grid ' . wp_json_encode( [
+				'lisitng_id'      => (string) $listing_id,
+				'custom_query'    => true,
+				'custom_query_id' => (string) $query_row_id,
+				'_element_id'     => $query_id,
+			] ) . ' /-->';
+		}
+
+		$html  = '<div class="factory-native-filters-page" style="max-width: 1120px; margin: 72px auto; padding: 0 24px; color: #10201d;">';
+		$html .= '<header style="margin-bottom: 28px;">';
+		$html .= '<span style="display: inline-flex; border-radius: 999px; background: ' . esc_attr( $style_tokens['background'] ) . '; color: ' . esc_attr( $style_tokens['primary'] ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 14px;">Experimental native filters</span>';
+		$html .= '<h1 style="font-size: clamp(34px, 4.5vw, 58px); line-height: 1.06; margin: 0 0 12px;">' . esc_html( $page['title'] ?? 'Native Properties' ) . '</h1>';
+		$html .= '<p style="max-width: 720px; color: #52635f; font-size: 17px; line-height: 1.65; margin: 0;">This page is a native JetSmartFilters and JetEngine Listing Grid proof. The stable catalog remains available at <a href="' . esc_url( home_url( '/properties/' ) ) . '">/properties/</a>.</p>';
+		$html .= '</header>';
+
+		if ( empty( $filter_blocks ) || '' === $listing_block ) {
+			$html .= '<div style="border: 1px solid #d7eee9; border-radius: 18px; background: #fff; padding: 22px; color: #52635f;">';
+			$html .= esc_html( 'Native filters are not ready yet. Generate the Real Estate demo with JetSmartFilters and JetEngine active, then refresh this page.' );
+			$html .= '</div>';
+			$html .= '</div>';
+
+			return $html;
+		}
+
+		$html .= '<section class="factory-native-filter-controls" style="background: ' . esc_attr( $style_tokens['background'] ) . '; border: 1px solid #b9e6de; border-radius: 20px; padding: 18px; margin: 0 0 24px;">';
+		$html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end;">';
+		$html .= implode( "\n\n", $filter_blocks );
+		$html .= '</div>';
+		$html .= '</section>';
+		$html .= '<section class="factory-native-listing-grid">';
+		$html .= $listing_block;
+		$html .= '</section>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	private function render_jetsmartfilters_select_block( int $filter_id, string $query_id ): string {
+		return '<!-- wp:jet-smart-filters/select ' . wp_json_encode( [
+			'filter_id'                    => $filter_id,
+			'content_provider'             => 'jet-engine',
+			'query_id'                     => $query_id,
+			'show_label'                   => true,
+			'additional_providers_enabled' => false,
+		] ) . ' /-->';
 	}
 
 	private function render_contact_page_content( array $blueprint ): string {
@@ -2613,6 +2686,82 @@ class Factory_Render_Adapter {
 		}
 
 		return [];
+	}
+
+	private function find_jetengine_listing_id( string $slug ): int {
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$posts = get_posts( [
+			'post_type'   => 'jet-engine',
+			'post_status' => 'any',
+			'name'        => $slug,
+			'numberposts' => 1,
+		] );
+
+		return isset( $posts[0] ) ? (int) $posts[0]->ID : 0;
+	}
+
+	private function find_jetsmartfilters_filter_id( string $slug ): int {
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$posts = get_posts( [
+			'post_type'   => 'jet-smart-filters',
+			'post_status' => 'any',
+			'numberposts' => 1,
+			'meta_query'  => [
+				'relation' => 'AND',
+				[
+					'key'   => '_factory_filter_key',
+					'value' => $slug,
+				],
+				[
+					'key'   => '_factory_filter_provider',
+					'value' => 'jetsmartfilters',
+				],
+			],
+		] );
+
+		return isset( $posts[0] ) ? (int) $posts[0]->ID : 0;
+	}
+
+	private function resolve_jetengine_query_row_id( string $query_slug, string $query_id ): int {
+		if ( ! function_exists( 'jet_engine' ) || ! class_exists( 'Jet_Engine\\Query_Builder\\Manager' ) ) {
+			return 0;
+		}
+
+		$manager = \Jet_Engine\Query_Builder\Manager::instance();
+
+		if ( empty( $manager->data ) || empty( $manager->data->db ) ) {
+			return 0;
+		}
+
+		$rows = $manager->data->db->query( $manager->data->table, [ 'status' => 'query' ], null, false );
+
+		if ( ! is_array( $rows ) ) {
+			return 0;
+		}
+
+		foreach ( $rows as $row ) {
+			$args = maybe_unserialize( $row['args'] ?? [] );
+
+			if ( ! is_array( $args ) ) {
+				continue;
+			}
+
+			if ( '' !== $query_id && ( $args['query_id'] ?? '' ) === $query_id ) {
+				return absint( $row['id'] ?? 0 );
+			}
+
+			if ( '' !== $query_slug && ( $args['query_id'] ?? '' ) === 'factory_' . $query_slug ) {
+				return absint( $row['id'] ?? 0 );
+			}
+		}
+
+		return 0;
 	}
 
 	private function get_listing_slug_for_post_type( array $blueprint, string $post_type ): string {

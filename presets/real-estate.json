@@ -119,6 +119,19 @@
       "slug": "properties",
       "title": "Properties"
     },
+    "native_filters": {
+      "slug": "properties-native",
+      "title": "Native Properties",
+      "experimental": true,
+      "listing": "property-card",
+      "query": "native_real_estate_properties",
+      "provider_query_id": "native_list",
+      "filters": [
+        "property_purpose",
+        "property_type",
+        "property_district"
+      ]
+    },
     "contact": {
       "slug": "contact",
       "title": "Contact Kyiv Turquoise Realty",
@@ -178,6 +191,19 @@
       "posts_per_page": 30,
       "orderby": "date",
       "order": "DESC"
+    },
+    {
+      "slug": "native_real_estate_properties",
+      "label": "Native Real Estate Properties",
+      "provider": "jetengine",
+      "type": "posts",
+      "query_id": "native_list",
+      "native_filters": true,
+      "post_type": "property",
+      "post_status": "publish",
+      "posts_per_page": 30,
+      "orderby": "date",
+      "order": "DESC"
     }
   ],
   "filters": [
@@ -189,7 +215,7 @@
       "source": "taxonomy",
       "taxonomy": "purpose",
       "query_var": "purpose",
-      "query": "real_estate_properties",
+      "query": "native_real_estate_properties",
       "listing": "property-card",
       "required": false
     },
@@ -201,7 +227,7 @@
       "source": "taxonomy",
       "taxonomy": "property_type",
       "query_var": "property_type",
-      "query": "real_estate_properties",
+      "query": "native_real_estate_properties",
       "listing": "property-card",
       "required": false
     },
@@ -213,7 +239,7 @@
       "source": "taxonomy",
       "taxonomy": "district",
       "query_var": "district",
-      "query": "real_estate_properties",
+      "query": "native_real_estate_properties",
       "listing": "property-card",
       "required": false
     }
