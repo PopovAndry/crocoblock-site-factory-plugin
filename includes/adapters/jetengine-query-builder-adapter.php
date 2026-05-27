@@ -172,7 +172,48 @@ class Factory_JetEngine_Query_Builder_Adapter {
 					? "JetEngine query post status valid: {$query['post_status']}"
 					: "JetEngine query post status missing: {$query['post_status']}",
 			];
+
+			if ( ! empty( $query['native_filters'] ) ) {
+				foreach ( $this->validate_native_query_shape( $query, $existing, $args, $posts_args ) as $native_check ) {
+					$checks[] = $native_check;
+				}
+			}
 		}
+
+		return $checks;
+	}
+
+	private function validate_native_query_shape( array $query, array $row, array $args, array $posts_args ): array {
+		$checks = [];
+		$slug   = $query['slug'];
+
+		$checks[] = [
+			'status'  => 'query' === ( $row['status'] ?? '' ) ? 'ok' : 'error',
+			'message' => 'query' === ( $row['status'] ?? '' )
+				? "Native JetSmartFilters query row status valid: {$slug}"
+				: "Native JetSmartFilters query row status invalid: {$slug}",
+		];
+
+		foreach ( [ 'tax_query', 'meta_query', 'date_query' ] as $query_key ) {
+			$is_empty = empty( $posts_args[ $query_key ] );
+
+			$checks[] = [
+				'status'  => $is_empty ? 'ok' : 'error',
+				'message' => $is_empty
+					? "Native JetSmartFilters {$query_key} empty: {$slug}"
+					: "Native JetSmartFilters {$query_key} must stay empty: {$slug}",
+			];
+		}
+
+		$cache_query = $args['cache_query'] ?? false;
+		$cache_off   = false === $cache_query || 'false' === $cache_query || 0 === $cache_query || '0' === $cache_query || '' === $cache_query;
+
+		$checks[] = [
+			'status'  => $cache_off ? 'ok' : 'error',
+			'message' => $cache_off
+				? "Native JetSmartFilters query cache disabled: {$slug}"
+				: "Native JetSmartFilters query cache should be disabled: {$slug}",
+		];
 
 		return $checks;
 	}

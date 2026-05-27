@@ -425,6 +425,18 @@
 	color: #ffffff;
 }
 
+.factory-demo-links a.factory-demo-link-experimental {
+	background: #ffffff;
+	border: 1px solid #9ddbd2;
+	color: #0f766e;
+}
+
+.factory-demo-links a.factory-demo-link-experimental:hover,
+.factory-demo-links a.factory-demo-link-experimental:focus {
+	background: #ecfeff;
+	color: #0f766e;
+}
+
 .factory-badge {
 	border-radius: 999px;
 	display: inline-block;

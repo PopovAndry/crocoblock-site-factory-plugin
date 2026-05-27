@@ -367,6 +367,7 @@
 						'<div class="factory-demo-links">',
 							'<a href="' + escapeHtml( homeUrl( '/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Website</a>',
 							'<a href="' + escapeHtml( homeUrl( '/properties/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Properties Archive</a>',
+							'<a class="factory-demo-link-experimental" href="' + escapeHtml( homeUrl( '/properties-native/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Native Filters Proof</a>',
 							'<a href="' + escapeHtml( homeUrl( '/contact/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Contact</a>',
 							'<a href="' + escapeHtml( homeUrl( '/property/turquoise-view-apartment-in-pechersk/' ) ) + '" target="_blank" rel="noopener noreferrer">Open sample Apartment</a>',
 							'<a href="' + escapeHtml( homeUrl( '/property/solomianskyi-business-office/' ) ) + '" target="_blank" rel="noopener noreferrer">Open sample Commercial</a>',

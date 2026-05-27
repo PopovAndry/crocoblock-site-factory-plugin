@@ -211,6 +211,10 @@ class Factory_Render_Adapter {
 			}
 		}
 
+		foreach ( $this->validate_native_filters_proof( $blueprint ) as $native_check ) {
+			$results[] = $native_check;
+		}
+
 		foreach ( $this->validate_home_queries( $blueprint ) as $query_check ) {
 			$results[] = $query_check;
 		}
@@ -659,6 +663,132 @@ class Factory_Render_Adapter {
 			'status'  => 'ok',
 			'message' => "{$label} up-to-date: {$page_title}",
 		];
+	}
+
+	private function validate_native_filters_proof( array $blueprint ): array {
+		$checks = [];
+		$page   = $this->get_configured_page( $blueprint, 'native_filters' );
+
+		if ( empty( $page ) ) {
+			return $checks;
+		}
+
+		$page_slug     = is_string( $page['slug'] ?? null ) ? $page['slug'] : '';
+		$query_id      = sanitize_key( $page['provider_query_id'] ?? 'native_list' );
+		$query_slug    = sanitize_key( $page['query'] ?? '' );
+		$filter_keys   = is_array( $page['filters'] ?? null ) ? $page['filters'] : [];
+		$native_page   = $page_slug ? get_page_by_path( $page_slug ) : null;
+		$archive_page  = $blueprint['pages']['archive']['slug'] ?? 'properties';
+		$fallback_page = is_string( $archive_page ) && '' !== $archive_page ? get_page_by_path( $archive_page ) : null;
+
+		$checks[] = [
+			'status'  => $fallback_page ? 'ok' : 'error',
+			'message' => $fallback_page
+				? "Stable Properties fallback page exists: {$archive_page}"
+				: "Stable Properties fallback page missing: {$archive_page}",
+		];
+
+		if ( ! $this->is_jetsmartfilters_available() ) {
+			$checks[] = [
+				'status'  => 'ok',
+				'message' => 'Native JetSmartFilters proof skipped because JetSmartFilters is optional; /properties/ fallback remains active.',
+			];
+
+			return $checks;
+		}
+
+		if ( ! $native_page ) {
+			$checks[] = [
+				'status'  => 'error',
+				'message' => "Native JetSmartFilters proof page missing: {$page_slug}",
+			];
+
+			return $checks;
+		}
+
+		$content      = (string) $native_page->post_content;
+		$query_row_id = $this->resolve_jetengine_query_row_id( $query_slug, $query_id );
+		$filter_count = substr_count( $content, 'wp:jet-smart-filters/select' );
+		$expected_filters = max( 1, count( $filter_keys ) );
+
+		$checks[] = [
+			'status'  => 'publish' === $native_page->post_status ? 'ok' : 'error',
+			'message' => 'publish' === $native_page->post_status
+				? "Native JetSmartFilters proof page published: {$page_slug}"
+				: "Native JetSmartFilters proof page not published: {$page_slug}",
+		];
+
+		$checks[] = [
+			'status'  => $filter_count >= $expected_filters ? 'ok' : 'error',
+			'message' => $filter_count >= $expected_filters
+				? "Native JetSmartFilters select blocks present: {$filter_count}"
+				: "Native JetSmartFilters select blocks missing: {$page_slug}",
+		];
+
+		$checks[] = [
+			'status'  => false !== strpos( $content, '"query_id":"' . $query_id . '"' ) ? 'ok' : 'error',
+			'message' => false !== strpos( $content, '"query_id":"' . $query_id . '"' )
+				? "Native JetSmartFilters query ID bound: {$query_id}"
+				: "Native JetSmartFilters query ID missing from page: {$query_id}",
+		];
+
+		$checks[] = [
+			'status'  => false !== strpos( $content, '"content_provider":"jet-engine"' ) ? 'ok' : 'error',
+			'message' => false !== strpos( $content, '"content_provider":"jet-engine"' )
+				? 'Native JetSmartFilters content provider is JetEngine.'
+				: 'Native JetSmartFilters content provider binding missing.',
+		];
+
+		$checks[] = [
+			'status'  => false !== strpos( $content, '"additional_providers_enabled":false' ) ? 'ok' : 'error',
+			'message' => false !== strpos( $content, '"additional_providers_enabled":false' )
+				? 'Native JetSmartFilters additional providers disabled.'
+				: 'Native JetSmartFilters additional providers should be disabled.',
+		];
+
+		$checks[] = [
+			'status'  => false !== strpos( $content, 'wp:jet-engine/listing-grid' ) ? 'ok' : 'error',
+			'message' => false !== strpos( $content, 'wp:jet-engine/listing-grid' )
+				? 'Native JetEngine Listing Grid block present.'
+				: 'Native JetEngine Listing Grid block missing.',
+		];
+
+		$checks[] = [
+			'status'  => false !== strpos( $content, '"_element_id":"' . $query_id . '"' ) ? 'ok' : 'error',
+			'message' => false !== strpos( $content, '"_element_id":"' . $query_id . '"' )
+				? "Native Listing Grid element ID bound: {$query_id}"
+				: "Native Listing Grid element ID missing: {$query_id}",
+		];
+
+		$checks[] = [
+			'status'  => $query_row_id > 0 ? 'ok' : 'error',
+			'message' => $query_row_id > 0
+				? "Native Query Builder row resolved: {$query_id}"
+				: "Native Query Builder row missing: {$query_id}",
+		];
+
+		$custom_query_matches = $query_row_id > 0 && false !== strpos( $content, '"custom_query_id":"' . $query_row_id . '"' );
+
+		$checks[] = [
+			'status'  => $custom_query_matches ? 'ok' : 'error',
+			'message' => $custom_query_matches
+				? "Native Listing Grid custom query ID matches row: {$query_row_id}"
+				: "Native Listing Grid custom query ID does not match Query Builder row: {$query_id}",
+		];
+
+		foreach ( $filter_keys as $filter_key ) {
+			$filter_key = sanitize_key( $filter_key );
+			$filter_id  = $this->find_jetsmartfilters_filter_id( $filter_key );
+
+			$checks[] = [
+				'status'  => $filter_id > 0 ? 'ok' : 'error',
+				'message' => $filter_id > 0
+					? "Native JetSmartFilters Factory filter resolved: {$filter_key}"
+					: "Native JetSmartFilters Factory filter missing: {$filter_key}",
+			];
+		}
+
+		return $checks;
 	}
 
 	private function validate_front_page( array $blueprint ): ?array {
@@ -2726,6 +2856,11 @@ class Factory_Render_Adapter {
 		] );
 
 		return isset( $posts[0] ) ? (int) $posts[0]->ID : 0;
+	}
+
+	private function is_jetsmartfilters_available(): bool {
+		return post_type_exists( 'jet-smart-filters' )
+			|| ( function_exists( 'jet_smart_filters' ) && '' !== (string) get_option( 'jet_smart_filters_version', '' ) );
 	}
 
 	private function resolve_jetengine_query_row_id( string $query_slug, string $query_id ): int {
