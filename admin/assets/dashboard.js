@@ -93,18 +93,39 @@
 		return Array.isArray( value ) ? value.length : 0;
 	}
 
-	function isNoRunsError( error ) {
-		const message = String( error && error.message ? error.message : '' ).toLowerCase();
-		return Number( error && error.status ) === 404 && (
+	function isNoRunsMessage( message ) {
+		message = String( message || '' ).toLowerCase();
+
+		return (
 			message.includes( 'no runs found' ) ||
+			message.includes( 'no factory runs found' ) ||
+			message.includes( 'no latest run' ) ||
+			message.includes( 'latest run not found' ) ||
 			message.includes( 'run registry not found' )
 		);
 	}
 
+	function isNoRunsPayload( payload ) {
+		return payload && typeof payload === 'object' && isNoRunsMessage( payload.message );
+	}
+
+	function isNoRunsError( error ) {
+		return Number( error && error.status ) === 404 && (
+			isNoRunsMessage( error && error.message ) ||
+			isNoRunsPayload( error && error.payload )
+		);
+	}
+
 	function isFirstRunEmptyResult( label, result ) {
-		return result.status === 'rejected' &&
-			( label === 'Runs' || label === 'Latest run' ) &&
-			isNoRunsError( result.reason );
+		if ( ! [ 'Doctor', 'Runs', 'Latest run' ].includes( label ) ) {
+			return false;
+		}
+
+		if ( result.status === 'rejected' ) {
+			return isNoRunsError( result.reason );
+		}
+
+		return result.status === 'fulfilled' && isNoRunsPayload( result.value );
 	}
 
 	function homeUrl( path ) {
@@ -751,12 +772,12 @@
 			state.noRunsYet = false;
 
 			results.forEach( function ( result, index ) {
-				if ( result.status === 'rejected' ) {
-					if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
-						state.noRunsYet = true;
-						return;
-					}
+				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
+					state.noRunsYet = true;
+					return;
+				}
 
+				if ( result.status === 'rejected' ) {
 					failures.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
@@ -767,21 +788,22 @@
 
 			state.errors = [];
 
-			if ( results[0].status === 'fulfilled' ) {
+			if ( results[0].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[0], results[0] ) ) {
 				state.doctor = results[0].value;
 			}
 
-			if ( results[1].status === 'fulfilled' ) {
+			if ( results[1].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[1], results[1] ) ) {
 				state.runs = Array.isArray( results[1].value.runs ) ? results[1].value.runs : [];
 			}
 
-			if ( results[2].status === 'fulfilled' ) {
+			if ( results[2].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[2], results[2] ) ) {
 				state.latest = results[2].value;
 				state.selectedRun = results[2].value;
 				state.selectedFile = results[2].value.run?.file || '';
 			}
 
 			if ( state.noRunsYet ) {
+				state.doctor = null;
 				state.runs = [];
 				state.latest = null;
 				state.selectedRun = null;
@@ -809,31 +831,32 @@
 			state.noRunsYet = false;
 
 			results.forEach( function ( result, index ) {
-				if ( result.status === 'rejected' ) {
-					if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
-						state.noRunsYet = true;
-						return;
-					}
+				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
+					state.noRunsYet = true;
+					return;
+				}
 
+				if ( result.status === 'rejected' ) {
 					state.errors.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
 
-			if ( results[0].status === 'fulfilled' ) {
+			if ( results[0].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[0], results[0] ) ) {
 				state.doctor = results[0].value;
 			}
 
-			if ( results[1].status === 'fulfilled' ) {
+			if ( results[1].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[1], results[1] ) ) {
 				state.runs = Array.isArray( results[1].value.runs ) ? results[1].value.runs : [];
 			}
 
-			if ( results[2].status === 'fulfilled' ) {
+			if ( results[2].status === 'fulfilled' && ! isFirstRunEmptyResult( labels[2], results[2] ) ) {
 				state.latest = results[2].value;
 				state.selectedRun = results[2].value;
 				state.selectedFile = results[2].value.run?.file || '';
 			}
 
 			if ( state.noRunsYet ) {
+				state.doctor = null;
 				state.runs = [];
 				state.latest = null;
 				state.selectedRun = null;
