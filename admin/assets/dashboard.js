@@ -24,6 +24,7 @@
 		betaProductPlan: null,
 		lastActionAt: '',
 		advancedOpen: false,
+		noRunsYet: false,
 	};
 
 	function endpoint( path ) {
@@ -48,11 +49,19 @@
 				},
 			}
 		).then( function ( response ) {
-			if ( ! response.ok ) {
-				throw new Error( 'Request failed: ' + response.status );
-			}
+			return response.json().catch( function () {
+				return null;
+			} ).then( function ( data ) {
+				if ( ! response.ok ) {
+					const message = data && data.message ? data.message : 'Request failed: ' + response.status;
+					const error = new Error( message );
+					error.status = response.status;
+					error.payload = data;
+					throw error;
+				}
 
-			return response.json();
+				return data;
+			} );
 		} );
 	}
 
@@ -82,6 +91,20 @@
 
 	function count( value ) {
 		return Array.isArray( value ) ? value.length : 0;
+	}
+
+	function isNoRunsError( error ) {
+		const message = String( error && error.message ? error.message : '' ).toLowerCase();
+		return Number( error && error.status ) === 404 && (
+			message.includes( 'no runs found' ) ||
+			message.includes( 'run registry not found' )
+		);
+	}
+
+	function isFirstRunEmptyResult( label, result ) {
+		return result.status === 'rejected' &&
+			( label === 'Runs' || label === 'Latest run' ) &&
+			isNoRunsError( result.reason );
 	}
 
 	function homeUrl( path ) {
@@ -283,6 +306,19 @@
 						return '<li>' + badge( issue.status ) + '<span>' + escapeHtml( issue.message || '' ) + '</span></li>';
 					} ).join( '' ) + '</ul>'
 					: '<p class="factory-empty">No drift issues reported.</p>',
+			'</section>',
+		].join( '' );
+	}
+
+	function renderFirstRunEmptyState() {
+		if ( ! state.noRunsYet ) {
+			return '';
+		}
+
+		return [
+			'<section class="factory-card factory-card-wide factory-first-run-empty">',
+				'<h2>No validation proof yet</h2>',
+				'<p>No runs yet. Generate a demo to create the first validation proof.</p>',
 			'</section>',
 		].join( '' );
 	}
@@ -549,6 +585,7 @@
 		root.innerHTML = [
 			renderHeader(),
 			renderErrors(),
+			renderFirstRunEmptyState(),
 			renderRealEstateDemo(),
 			'<div class="factory-grid">',
 				renderSystemStatus(),
@@ -711,8 +748,15 @@
 			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters' ];
 			const failures = [];
 
+			state.noRunsYet = false;
+
 			results.forEach( function ( result, index ) {
 				if ( result.status === 'rejected' ) {
+					if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
+						state.noRunsYet = true;
+						return;
+					}
+
 					failures.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
@@ -737,6 +781,13 @@
 				state.selectedFile = results[2].value.run?.file || '';
 			}
 
+			if ( state.noRunsYet ) {
+				state.runs = [];
+				state.latest = null;
+				state.selectedRun = null;
+				state.selectedFile = '';
+			}
+
 			if ( results[3].status === 'fulfilled' ) {
 				state.adapters = Array.isArray( results[3].value.adapters ) ? results[3].value.adapters : [];
 			}
@@ -754,8 +805,16 @@
 		] ).then( function ( results ) {
 			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters' ];
 
+			state.errors = [];
+			state.noRunsYet = false;
+
 			results.forEach( function ( result, index ) {
 				if ( result.status === 'rejected' ) {
+					if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
+						state.noRunsYet = true;
+						return;
+					}
+
 					state.errors.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
@@ -772,6 +831,13 @@
 				state.latest = results[2].value;
 				state.selectedRun = results[2].value;
 				state.selectedFile = results[2].value.run?.file || '';
+			}
+
+			if ( state.noRunsYet ) {
+				state.runs = [];
+				state.latest = null;
+				state.selectedRun = null;
+				state.selectedFile = '';
 			}
 
 			if ( results[3].status === 'fulfilled' ) {

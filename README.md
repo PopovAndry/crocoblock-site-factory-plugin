@@ -88,4 +88,5 @@ This repository is intentionally plugin-first and beta-focused. It does not incl
 
 ## Milestones
 
+- [Clean install beta guide](docs/clean-install-beta.md)
 - [v0.2 milestone](docs/v0.2-milestone.md)

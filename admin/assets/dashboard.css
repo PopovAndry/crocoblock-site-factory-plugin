@@ -562,6 +562,21 @@
 	padding: 18px;
 }
 
+.factory-first-run-empty {
+	background: #f7fbff;
+	border-color: #c8dff4;
+}
+
+.factory-first-run-empty h2 {
+	margin-bottom: 8px;
+}
+
+.factory-first-run-empty p {
+	color: #3c4d5f;
+	font-size: 14px;
+	margin: 0;
+}
+
 .factory-advanced-panel {
 	background: #f6f7f7;
 	border: 1px solid #dcdcde;
