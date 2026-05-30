@@ -49,8 +49,9 @@ If optional dependencies are missing, the stable Real Estate beta still uses fal
 6. Build the plugin ZIP with `.\tools\build-plugin-zip.ps1`.
 7. Upload and activate the ZIP in WordPress admin.
 8. Open **Site Factory**.
-9. Click **Generate Real Estate Demo**.
-10. Confirm the dashboard shows validation proof.
+9. Optionally edit the dashboard prompt.
+10. Click **Generate Real Estate Demo**.
+11. Confirm the dashboard shows validation proof.
 
 Before the first generation, the dashboard should show:
 
@@ -89,4 +90,5 @@ The Contact page should exist once as a page. The navigation menu should contain
 - `/properties-native/` is a native JetSmartFilters proof page, not the promoted main catalog.
 - Native JetSmartFilters rendering depends on `native_list` Query Builder and Listing Grid bindings.
 - JetFormBuilder is optional; the Request Viewing fallback is a valid beta state.
+- Prompt Testing v1 captures the dashboard prompt in the run manifest, but it does not mutate the prepared Real Estate blueprint yet.
 - Build release ZIPs with `git archive` through `tools/build-plugin-zip.ps1`.

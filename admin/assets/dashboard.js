@@ -22,6 +22,7 @@
 		betaMessage: null,
 		betaPlan: null,
 		betaProductPlan: null,
+		prompt: realEstatePrompt,
 		lastActionAt: '',
 		advancedOpen: false,
 		noRunsYet: false,
@@ -38,15 +39,21 @@
 
 	function request( path, options ) {
 		options = options || {};
+		const headers = {
+			'X-WP-Nonce': config.restNonce || '',
+		};
+
+		if ( options.body ) {
+			headers['Content-Type'] = 'application/json';
+		}
 
 		return window.fetch(
 			endpoint( path ),
 			{
 				credentials: 'same-origin',
 				method: options.method || 'GET',
-				headers: {
-					'X-WP-Nonce': config.restNonce || '',
-				},
+				headers: headers,
+				body: options.body ? JSON.stringify( options.body ) : undefined,
 			}
 		).then( function ( response ) {
 			return response.json().catch( function () {
@@ -91,6 +98,11 @@
 
 	function count( value ) {
 		return Array.isArray( value ) ? value.length : 0;
+	}
+
+	function addQueryParam( path, key, value ) {
+		const separator = path.includes( '?' ) ? '&' : '?';
+		return path + separator + encodeURIComponent( key ) + '=' + encodeURIComponent( value );
 	}
 
 	function isNoRunsMessage( message ) {
@@ -240,8 +252,8 @@
 					'<h3>Describe your website</h3>',
 					'<span>Prompt Preview</span>',
 				'</div>',
-				'<textarea readonly rows="4">' + escapeHtml( realEstatePrompt ) + '</textarea>',
-				'<p>Beta mode: this prompt currently runs the prepared Real Estate preset.</p>',
+				'<textarea rows="4" data-factory-prompt>' + escapeHtml( state.prompt || realEstatePrompt ) + '</textarea>',
+				'<p>Beta mode: this prompt is captured for the run manifest. The prepared Real Estate preset is still used.</p>',
 			'</div>',
 		].join( '' );
 	}
@@ -656,6 +668,12 @@
 			} );
 		} );
 
+		root.querySelectorAll( '[data-factory-prompt]' ).forEach( function ( textarea ) {
+			textarea.addEventListener( 'input', function () {
+				state.prompt = textarea.value;
+			} );
+		} );
+
 		root.querySelectorAll( '[data-factory-beta-action]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
 				const action = button.getAttribute( 'data-factory-beta-action' );
@@ -703,12 +721,21 @@
 		state.lastActionAt = new Date().toLocaleString();
 	}
 
+	function currentPrompt() {
+		const field = root.querySelector( '[data-factory-prompt]' );
+		const prompt = field ? field.value : state.prompt;
+		state.prompt = String( prompt || '' );
+
+		return state.prompt;
+	}
+
 	function previewRealEstatePlan() {
+		const prompt = currentPrompt();
 		state.betaAction = 'plan';
 		state.betaMessage = null;
 		render();
 
-		request( config.endpoints?.realEstatePlan || '/beta/real-estate/plan' )
+		request( addQueryParam( config.endpoints?.realEstatePlan || '/beta/real-estate/plan', 'prompt', prompt ) )
 			.then( function ( data ) {
 				state.betaPlan = data.plan || null;
 				state.betaProductPlan = data.product_plan || null;
@@ -725,13 +752,19 @@
 	}
 
 	function applyRealEstatePreset() {
+		const prompt = currentPrompt();
 		state.betaAction = 'apply';
 		state.betaMessage = null;
 		render();
 
 		request(
 			config.endpoints?.realEstateApply || '/beta/real-estate/apply',
-			{ method: 'POST' }
+			{
+				method: 'POST',
+				body: {
+					prompt: prompt,
+				},
+			}
 		)
 			.then( function ( data ) {
 				state.betaPlan = data.plan_summary

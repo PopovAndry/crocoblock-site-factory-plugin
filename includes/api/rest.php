@@ -191,17 +191,19 @@ function factory_register_rest_routes(): void {
         return true;
     }
 
-    function factory_rest_beta_real_estate_plan(): WP_REST_Response {
+    function factory_rest_beta_real_estate_plan( WP_REST_Request $request ): WP_REST_Response {
         try {
             $blueprint    = factory_rest_load_real_estate_blueprint();
+            $prompt       = factory_rest_get_beta_prompt( $request, 'Dashboard preview: real-estate' );
             $plan         = factory_rest_build_plan( $blueprint );
             $dependencies = factory_rest_get_real_estate_dependency_status();
-            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies );
+            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt );
 
             return new WP_REST_Response(
                 [
                     'status'       => 'ok',
                     'preset'       => 'real-estate',
+                    'prompt'       => $prompt,
                     'plan'         => $plan,
                     'dependencies' => $dependencies,
                     'product_plan' => $product_plan,
@@ -212,9 +214,10 @@ function factory_register_rest_routes(): void {
         }
     }
 
-    function factory_rest_beta_real_estate_apply(): WP_REST_Response {
+    function factory_rest_beta_real_estate_apply( WP_REST_Request $request ): WP_REST_Response {
         try {
             $blueprint    = factory_rest_load_real_estate_blueprint();
+            $prompt       = factory_rest_get_beta_prompt( $request, 'Dashboard apply: real-estate' );
             $dependencies = factory_rest_get_real_estate_dependency_status();
 
             if ( empty( $dependencies['ready'] ) ) {
@@ -236,7 +239,7 @@ function factory_register_rest_routes(): void {
             $report    = factory_validate_blueprint_state( $blueprint, false );
 
             $manifest_path = factory_save_run_manifest(
-                'Dashboard apply: real-estate',
+                $prompt,
                 'real-estate',
                 $blueprint,
                 $plan,
@@ -260,6 +263,7 @@ function factory_register_rest_routes(): void {
                     'status'           => $report['status'] ?? 'error',
                     'message'          => 'Real Estate preset applied.',
                     'preset'           => 'real-estate',
+                    'prompt'           => $prompt,
                     'file'             => basename( $manifest_path ),
                     'plan_summary'     => $plan['summary'] ?? [],
                     'execution_count'  => count( $execution ),
@@ -276,6 +280,23 @@ function factory_register_rest_routes(): void {
         $manager = new Factory_Blueprint_Preset_Manager();
 
         return $manager->load_preset( 'real-estate' );
+    }
+
+    function factory_rest_get_beta_prompt( WP_REST_Request $request, string $fallback ): string {
+        $prompt = $request->get_param( 'prompt' );
+
+        if ( is_array( $prompt ) || is_object( $prompt ) ) {
+            $prompt = '';
+        }
+
+        $prompt = is_string( $prompt ) || is_numeric( $prompt ) ? (string) $prompt : '';
+        $prompt = function_exists( 'wp_unslash' ) ? wp_unslash( $prompt ) : $prompt;
+        $prompt = function_exists( 'sanitize_textarea_field' )
+            ? sanitize_textarea_field( $prompt )
+            : trim( wp_strip_all_tags( $prompt ) );
+        $prompt = trim( $prompt );
+
+        return '' !== $prompt ? $prompt : $fallback;
     }
 
     function factory_rest_build_plan( array $blueprint ): array {
@@ -312,7 +333,8 @@ function factory_register_rest_routes(): void {
     function factory_rest_build_real_estate_product_plan(
         array $blueprint,
         array $plan,
-        array $dependencies
+        array $dependencies,
+        string $prompt = ''
     ): array {
         $property_count = isset( $blueprint['content']['property'] ) && is_array( $blueprint['content']['property'] )
             ? count( $blueprint['content']['property'] )
@@ -356,9 +378,18 @@ function factory_register_rest_routes(): void {
 
         return [
             'title'    => 'Real Estate Demo Plan',
-            'mode'     => 'Prepared Real Estate preset',
-            'summary'  => 'Generate a Kyiv real estate website with catalog, properties, images, filters, single pages, contact page, and validation proof.',
+            'mode'     => 'Prepared Real Estate preset with prompt context',
+            'summary'  => 'Generate a Kyiv real estate website with catalog, properties, images, filters, single pages, contact page, and validation proof. The prompt is captured in the run manifest; the blueprint remains the prepared Real Estate preset.',
             'sections' => [
+                [
+                    'label'  => 'Prompt context',
+                    'status' => 'ready',
+                    'items'  => [
+                        '' !== $prompt ? "Captured prompt: {$prompt}" : 'No custom prompt supplied',
+                        'Prompt is recorded for this beta run',
+                        'Blueprint mutation is not enabled in Prompt Testing v1',
+                    ],
+                ],
                 [
                     'label'  => 'Site structure',
                     'status' => 'ready',
