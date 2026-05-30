@@ -217,6 +217,22 @@
 		].join( '' );
 	}
 
+	function renderGenerationProgress() {
+		if ( state.betaAction !== 'apply' ) {
+			return '';
+		}
+
+		return [
+			'<div class="factory-demo-progress" role="status" aria-live="polite">',
+				'<span class="factory-demo-spinner" aria-hidden="true"></span>',
+				'<div>',
+					'<strong>Generating Real Estate Demo...</strong>',
+					'<span>This may take a moment.</span>',
+				'</div>',
+			'</div>',
+		].join( '' );
+	}
+
 	function renderPromptPreview() {
 		return [
 			'<div class="factory-prompt-preview">',
@@ -380,6 +396,7 @@
 					'</button>',
 				'</div>',
 				renderBetaMessage(),
+				renderGenerationProgress(),
 				'<div class="factory-demo-grid">',
 					'<div>',
 						'<h3>Preset Summary</h3>',
