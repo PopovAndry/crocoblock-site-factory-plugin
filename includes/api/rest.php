@@ -51,7 +51,7 @@ function factory_register_rest_routes(): void {
 			'callback' => 'factory_rest_capabilities',
 		],
 		'/beta/real-estate/plan' => [
-			'methods'  => 'GET',
+			'methods'  => [ 'GET', 'POST' ],
 			'callback' => 'factory_rest_beta_real_estate_plan',
 		],
 		'/beta/real-estate/apply' => [
@@ -193,20 +193,25 @@ function factory_register_rest_routes(): void {
 
     function factory_rest_beta_real_estate_plan( WP_REST_Request $request ): WP_REST_Response {
         try {
-            $blueprint    = factory_rest_load_real_estate_blueprint();
-            $prompt       = factory_rest_get_beta_prompt( $request, 'Dashboard preview: real-estate' );
+            $base_blueprint = factory_rest_load_real_estate_blueprint();
+            $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard preview: real-estate' );
+            $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
+            $prompt       = $prompt_context['prompt'];
             $plan         = factory_rest_build_plan( $blueprint );
             $dependencies = factory_rest_get_real_estate_dependency_status();
-            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt );
+            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt, $prompt_context );
 
             return new WP_REST_Response(
                 [
-                    'status'       => 'ok',
-                    'preset'       => 'real-estate',
-                    'prompt'       => $prompt,
-                    'plan'         => $plan,
-                    'dependencies' => $dependencies,
-                    'product_plan' => $product_plan,
+                    'status'            => 'ok',
+                    'preset'            => 'real-estate',
+                    'prompt'            => $prompt,
+                    'preset_variables'  => $prompt_context['preset_variables'],
+                    'applied_variables' => $prompt_context['applied_variables'],
+                    'prompt_notes'      => $prompt_context['notes'],
+                    'plan'              => $plan,
+                    'dependencies'      => $dependencies,
+                    'product_plan'      => $product_plan,
                 ]
             );
         } catch ( Throwable $e ) {
@@ -216,8 +221,10 @@ function factory_register_rest_routes(): void {
 
     function factory_rest_beta_real_estate_apply( WP_REST_Request $request ): WP_REST_Response {
         try {
-            $blueprint    = factory_rest_load_real_estate_blueprint();
-            $prompt       = factory_rest_get_beta_prompt( $request, 'Dashboard apply: real-estate' );
+            $base_blueprint = factory_rest_load_real_estate_blueprint();
+            $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard apply: real-estate' );
+            $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
+            $prompt       = $prompt_context['prompt'];
             $dependencies = factory_rest_get_real_estate_dependency_status();
 
             if ( empty( $dependencies['ready'] ) ) {
@@ -245,7 +252,10 @@ function factory_register_rest_routes(): void {
                 $plan,
                 $report,
                 $report['status'] ?? 'error',
-                $execution
+                $execution,
+                [
+                    'prompt_context' => $prompt_context,
+                ]
             );
 
             $results = function_exists( 'factory_build_manifest_results' )
@@ -260,15 +270,18 @@ function factory_register_rest_routes(): void {
 
             return new WP_REST_Response(
                 [
-                    'status'           => $report['status'] ?? 'error',
-                    'message'          => 'Real Estate preset applied.',
-                    'preset'           => 'real-estate',
-                    'prompt'           => $prompt,
-                    'file'             => basename( $manifest_path ),
-                    'plan_summary'     => $plan['summary'] ?? [],
-                    'execution_count'  => count( $execution ),
-                    'validation_count' => count( $report['checks'] ?? [] ),
-                    'results_summary'  => $results['summary'] ?? [],
+                    'status'            => $report['status'] ?? 'error',
+                    'message'           => 'Real Estate preset applied.',
+                    'preset'            => 'real-estate',
+                    'prompt'            => $prompt,
+                    'preset_variables'  => $prompt_context['preset_variables'],
+                    'applied_variables' => $prompt_context['applied_variables'],
+                    'prompt_notes'      => $prompt_context['notes'],
+                    'file'              => basename( $manifest_path ),
+                    'plan_summary'      => $plan['summary'] ?? [],
+                    'execution_count'   => count( $execution ),
+                    'validation_count'  => count( $report['checks'] ?? [] ),
+                    'results_summary'   => $results['summary'] ?? [],
                 ]
             );
         } catch ( Throwable $e ) {
@@ -297,6 +310,152 @@ function factory_register_rest_routes(): void {
         $prompt = trim( $prompt );
 
         return '' !== $prompt ? $prompt : $fallback;
+    }
+
+    function factory_rest_get_real_estate_prompt_context( WP_REST_Request $request, array $blueprint, string $fallback_prompt ): array {
+        $defaults = factory_rest_get_real_estate_variable_defaults( $blueprint );
+        $received = $request->get_param( 'preset_variables' );
+        $allowed  = factory_rest_get_real_estate_variable_schema();
+        $sanitized = [];
+        $applied   = [];
+        $notes     = [
+            'Prepared Real Estate preset is used as the base.',
+            'Only whitelisted copy fields are overlaid.',
+            'No schema, filters, forms, property data, media, or page topology changes are applied.',
+        ];
+
+        if ( ! is_array( $received ) ) {
+            $received = [];
+        }
+
+        foreach ( $received as $key => $value ) {
+            if ( ! isset( $allowed[ $key ] ) ) {
+                $notes[] = "Ignored unsupported preset variable: {$key}";
+            }
+        }
+
+        foreach ( $allowed as $key => $schema ) {
+            $default = $defaults[ $key ] ?? '';
+            $value   = $received[ $key ] ?? '';
+            $value   = factory_rest_sanitize_preset_variable( $value, $schema );
+
+            if ( '' === $value ) {
+                $value = $default;
+                $notes[] = "Used preset default for {$key}.";
+            }
+
+            $sanitized[ $key ] = $value;
+            $applied[ $key ]   = $value;
+        }
+
+        return [
+            'prompt'            => factory_rest_get_beta_prompt( $request, $fallback_prompt ),
+            'preset_variables'  => $sanitized,
+            'applied_variables' => $applied,
+            'notes'             => array_values( array_unique( $notes ) ),
+        ];
+    }
+
+    function factory_rest_get_real_estate_variable_schema(): array {
+        return [
+            'agency_name'   => [
+                'max'       => 80,
+                'sanitizer' => 'text',
+            ],
+            'hero_title'    => [
+                'max'       => 120,
+                'sanitizer' => 'text',
+            ],
+            'hero_subtitle' => [
+                'max'       => 240,
+                'sanitizer' => 'textarea',
+            ],
+            'contact_title' => [
+                'max'       => 120,
+                'sanitizer' => 'text',
+            ],
+            'contact_intro' => [
+                'max'       => 400,
+                'sanitizer' => 'textarea',
+            ],
+        ];
+    }
+
+    function factory_rest_sanitize_preset_variable( $value, array $schema ): string {
+        if ( is_array( $value ) || is_object( $value ) ) {
+            return '';
+        }
+
+        $value = is_string( $value ) || is_numeric( $value ) ? (string) $value : '';
+        $value = function_exists( 'wp_unslash' ) ? wp_unslash( $value ) : $value;
+        $value = 'textarea' === ( $schema['sanitizer'] ?? 'text' ) && function_exists( 'sanitize_textarea_field' )
+            ? sanitize_textarea_field( $value )
+            : sanitize_text_field( $value );
+        $value = trim( $value );
+        $max   = max( 1, (int) ( $schema['max'] ?? 120 ) );
+
+        if ( function_exists( 'mb_substr' ) ) {
+            return mb_substr( $value, 0, $max );
+        }
+
+        return substr( $value, 0, $max );
+    }
+
+    function factory_rest_get_real_estate_variable_defaults( array $blueprint ): array {
+        $home         = is_array( $blueprint['pages']['home'] ?? null ) ? $blueprint['pages']['home'] : [];
+        $contact      = is_array( $blueprint['pages']['contact'] ?? null ) ? $blueprint['pages']['contact'] : [];
+        $hero_section = factory_rest_find_real_estate_home_section( $home, 'hero' );
+
+        return [
+            'agency_name'   => (string) ( $blueprint['site']['name'] ?? $home['title'] ?? 'Kyiv Turquoise Realty' ),
+            'hero_title'    => (string) ( $hero_section['title'] ?? $home['title'] ?? 'Kyiv Turquoise Realty' ),
+            'hero_subtitle' => (string) ( $hero_section['subtitle'] ?? 'Find apartments, houses, and commercial spaces in Kyiv' ),
+            'contact_title' => (string) ( $contact['title'] ?? 'Contact Kyiv Turquoise Realty' ),
+            'contact_intro' => (string) ( $contact['text'] ?? 'Schedule a viewing or request more details about Kyiv properties.' ),
+        ];
+    }
+
+    function factory_rest_find_real_estate_home_section( array $home, string $type ): array {
+        foreach ( $home['sections'] ?? [] as $section ) {
+            if ( is_array( $section ) && $type === ( $section['type'] ?? '' ) ) {
+                return $section;
+            }
+        }
+
+        return [];
+    }
+
+    function factory_rest_apply_real_estate_preset_variables( array $blueprint, array $variables ): array {
+        if ( isset( $variables['agency_name'] ) ) {
+            $blueprint['site']['name'] = $variables['agency_name'];
+            $blueprint['pages']['home']['title'] = $variables['agency_name'];
+        }
+
+        foreach ( $blueprint['pages']['home']['sections'] ?? [] as $index => $section ) {
+            if ( ! is_array( $section ) || 'hero' !== ( $section['type'] ?? '' ) ) {
+                continue;
+            }
+
+            if ( isset( $variables['hero_title'] ) ) {
+                $blueprint['pages']['home']['sections'][ $index ]['title'] = $variables['hero_title'];
+            }
+
+            if ( isset( $variables['hero_subtitle'] ) ) {
+                $blueprint['pages']['home']['sections'][ $index ]['subtitle'] = $variables['hero_subtitle'];
+            }
+
+            break;
+        }
+
+        if ( isset( $variables['contact_title'] ) ) {
+            $blueprint['pages']['contact']['title'] = $variables['contact_title'];
+        }
+
+        if ( isset( $variables['contact_intro'] ) ) {
+            $blueprint['pages']['contact']['text'] = $variables['contact_intro'];
+        }
+
+        return $blueprint;
     }
 
     function factory_rest_build_plan( array $blueprint ): array {
@@ -334,7 +493,8 @@ function factory_register_rest_routes(): void {
         array $blueprint,
         array $plan,
         array $dependencies,
-        string $prompt = ''
+        string $prompt = '',
+        array $prompt_context = []
     ): array {
         $property_count = isset( $blueprint['content']['property'] ) && is_array( $blueprint['content']['property'] )
             ? count( $blueprint['content']['property'] )
@@ -375,11 +535,23 @@ function factory_register_rest_routes(): void {
         $dependency_status = ! empty( $dependencies['ready'] )
             ? 'ready'
             : 'warning';
+        $applied_variables = is_array( $prompt_context['applied_variables'] ?? null )
+            ? $prompt_context['applied_variables']
+            : [];
+        $prompt_notes = is_array( $prompt_context['notes'] ?? null )
+            ? $prompt_context['notes']
+            : [];
+        $variable_items = [];
+
+        foreach ( $applied_variables as $key => $value ) {
+            $label = ucwords( str_replace( '_', ' ', (string) $key ) );
+            $variable_items[] = "{$label}: {$value}";
+        }
 
         return [
             'title'    => 'Real Estate Demo Plan',
-            'mode'     => 'Prepared Real Estate preset with prompt context',
-            'summary'  => 'Generate a Kyiv real estate website with catalog, properties, images, filters, single pages, contact page, and validation proof. The prompt is captured in the run manifest; the blueprint remains the prepared Real Estate preset.',
+            'mode'     => 'Prepared Real Estate preset with safe copy variables',
+            'summary'  => 'Generate a Kyiv real estate website with catalog, properties, images, filters, single pages, contact page, and validation proof. The prompt is captured in the run manifest; only explicit safe copy variables are overlaid onto the prepared preset.',
             'sections' => [
                 [
                     'label'  => 'Prompt context',
@@ -387,7 +559,26 @@ function factory_register_rest_routes(): void {
                     'items'  => [
                         '' !== $prompt ? "Captured prompt: {$prompt}" : 'No custom prompt supplied',
                         'Prompt is recorded for this beta run',
-                        'Blueprint mutation is not enabled in Prompt Testing v1',
+                        'Free-prose prompt parsing is not enabled in Prompt Testing v1',
+                    ],
+                ],
+                [
+                    'label'  => 'Applied safe variables',
+                    'status' => 'ready',
+                    'items'  => empty( $variable_items )
+                        ? [ 'No safe preset variables supplied' ]
+                        : array_merge(
+                            $variable_items,
+                            $prompt_notes
+                        ),
+                ],
+                [
+                    'label'  => 'Guardrails',
+                    'status' => 'ready',
+                    'items'  => [
+                        'No CPT, taxonomy, meta, filter, form, query, listing, media, or property content schema changes',
+                        'No property count, district, taxonomy term, image, native filter, or form schema changes',
+                        'Prepared Real Estate preset remains the deterministic base',
                     ],
                 ],
                 [

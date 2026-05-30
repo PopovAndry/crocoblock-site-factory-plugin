@@ -50,8 +50,9 @@ If optional dependencies are missing, the stable Real Estate beta still uses fal
 7. Upload and activate the ZIP in WordPress admin.
 8. Open **Site Factory**.
 9. Optionally edit the dashboard prompt.
-10. Click **Generate Real Estate Demo**.
-11. Confirm the dashboard shows validation proof.
+10. Optionally adjust the safe preset variables for agency, hero, and contact copy.
+11. Click **Generate Real Estate Demo**.
+12. Confirm the dashboard shows validation proof.
 
 Before the first generation, the dashboard should show:
 
@@ -90,5 +91,7 @@ The Contact page should exist once as a page. The navigation menu should contain
 - `/properties-native/` is a native JetSmartFilters proof page, not the promoted main catalog.
 - Native JetSmartFilters rendering depends on `native_list` Query Builder and Listing Grid bindings.
 - JetFormBuilder is optional; the Request Viewing fallback is a valid beta state.
-- Prompt Testing v1 captures the dashboard prompt in the run manifest, but it does not mutate the prepared Real Estate blueprint yet.
+- Prompt Testing v1 captures the dashboard prompt in the run manifest.
+- Prompt Testing v1 Phase 2 supports explicit safe preset variables for selected copy fields only: agency name, hero title/subtitle, and contact title/intro.
+- Prompt Testing v1 does not mutate schema, property content, filters, forms, queries, listings, media, or page topology.
 - Build release ZIPs with `git archive` through `tools/build-plugin-zip.ps1`.

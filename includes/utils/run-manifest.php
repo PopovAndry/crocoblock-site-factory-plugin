@@ -11,7 +11,8 @@ function factory_save_run_manifest(
 	array $plan,
 	array $validation,
 	string $status = 'success',
-	array $execution = []
+	array $execution = [],
+	array $context = []
 ): string {
 
 	$status = factory_resolve_run_status_from_validation( $validation );
@@ -39,6 +40,10 @@ function factory_save_run_manifest(
 		'results'    => factory_build_manifest_results( $validation ),
 		'execution'  => factory_build_manifest_execution( $execution ),
 	];
+
+	if ( ! empty( $context ) ) {
+		$data = array_merge( $data, $context );
+	}
 
 	file_put_contents(
 		$path,

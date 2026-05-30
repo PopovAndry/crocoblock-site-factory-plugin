@@ -4,6 +4,13 @@
 	const config = window.FactoryDashboardConfig || {};
 	const root = document.getElementById( 'factory-dashboard-root' );
 	const realEstatePrompt = 'Create a Kyiv real estate agency website in turquoise colors with 30 properties, image pools, a homepage with featured listings, a property catalog, single property pages, a contact page, and validation proof.';
+	const defaultPresetVariables = {
+		agency_name: 'Kyiv Turquoise Realty',
+		hero_title: 'Kyiv Turquoise Realty',
+		hero_subtitle: 'Find apartments, houses, and commercial spaces in Kyiv',
+		contact_title: 'Contact Kyiv Turquoise Realty',
+		contact_intro: 'Schedule a viewing or request more details about Kyiv properties.',
+	};
 
 	if ( ! root ) {
 		return;
@@ -23,6 +30,7 @@
 		betaPlan: null,
 		betaProductPlan: null,
 		prompt: realEstatePrompt,
+		presetVariables: Object.assign( {}, defaultPresetVariables ),
 		lastActionAt: '',
 		advancedOpen: false,
 		noRunsYet: false,
@@ -105,6 +113,18 @@
 		return path + separator + encodeURIComponent( key ) + '=' + encodeURIComponent( value );
 	}
 
+	function presetVariableLabel( key ) {
+		const labels = {
+			agency_name: 'Agency name',
+			hero_title: 'Hero title',
+			hero_subtitle: 'Hero subtitle',
+			contact_title: 'Contact title',
+			contact_intro: 'Contact intro',
+		};
+
+		return labels[ key ] || key;
+	}
+
 	function isNoRunsMessage( message ) {
 		message = String( message || '' ).toLowerCase();
 
@@ -167,6 +187,19 @@
 			'warning ' + summaryValue( summary, 'warning' ),
 			'error ' + summaryValue( summary, 'error' ),
 		].join( ' / ' );
+	}
+
+	function promptContextSummary( run ) {
+		const context = run && run.prompt_context ? run.prompt_context : null;
+		const variables = context && context.applied_variables ? context.applied_variables : null;
+
+		if ( ! variables || typeof variables !== 'object' ) {
+			return '-';
+		}
+
+		return Object.keys( variables ).map( function ( key ) {
+			return presetVariableLabel( key ) + ': ' + variables[ key ];
+		} ).join( ' / ' );
 	}
 
 	function runFromLatest() {
@@ -254,6 +287,40 @@
 				'</div>',
 				'<textarea rows="4" data-factory-prompt>' + escapeHtml( state.prompt || realEstatePrompt ) + '</textarea>',
 				'<p>Beta mode: this prompt is captured for the run manifest. The prepared Real Estate preset is still used.</p>',
+			'</div>',
+			renderPresetVariables(),
+		].join( '' );
+	}
+
+	function renderPresetVariables() {
+		const fields = [
+			[ 'agency_name', 'text' ],
+			[ 'hero_title', 'text' ],
+			[ 'hero_subtitle', 'textarea' ],
+			[ 'contact_title', 'text' ],
+			[ 'contact_intro', 'textarea' ],
+		];
+
+		return [
+			'<div class="factory-preset-variables">',
+				'<div class="factory-preset-variables-heading">',
+					'<h3>Safe preset variables</h3>',
+					'<span>Copy only</span>',
+				'</div>',
+				'<p>These beta variables update selected site copy only. The prepared preset is still used, and schema, filters, forms, property data, and page structure are unchanged.</p>',
+				'<div class="factory-preset-variable-grid">',
+					fields.map( function ( field ) {
+						const key = field[0];
+						const type = field[1];
+						const value = state.presetVariables[ key ] || defaultPresetVariables[ key ] || '';
+
+						if ( type === 'textarea' ) {
+							return '<label><span>' + escapeHtml( presetVariableLabel( key ) ) + '</span><textarea rows="2" data-factory-preset-variable="' + escapeHtml( key ) + '">' + escapeHtml( value ) + '</textarea></label>';
+						}
+
+						return '<label><span>' + escapeHtml( presetVariableLabel( key ) ) + '</span><input type="text" data-factory-preset-variable="' + escapeHtml( key ) + '" value="' + escapeHtml( value ) + '"></label>';
+					} ).join( '' ),
+				'</div>',
 			'</div>',
 		].join( '' );
 	}
@@ -443,6 +510,7 @@
 						'<dl class="factory-definition-list factory-definition-list-wide">',
 							'<dt>Run file</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 							'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
+							'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
 							'<dt>Execution</dt><dd>' + escapeHtml( executionCount( run ) ) + ' items</dd>',
 							'<dt>Validation</dt><dd>' + escapeHtml( validationCount( run ) ) + ' checks</dd>',
 							'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
@@ -478,6 +546,7 @@
 					'<dt>File</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 					'<dt>Timestamp</dt><dd>' + escapeHtml( run.timestamp || '-' ) + '</dd>',
 					'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
+					'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
 				'</dl>',
 				'<div class="factory-metric-grid">',
 					renderMetric( 'Plan', planSummaryText( plan ) ),
@@ -566,6 +635,7 @@
 				'<dl class="factory-definition-list factory-definition-list-wide">',
 					'<dt>File</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 					'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
+					'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
 					'<dt>Plan</dt><dd>' + escapeHtml( planSummaryText( plan ) ) + '</dd>',
 					'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
 				'</dl>',
@@ -674,6 +744,16 @@
 			} );
 		} );
 
+		root.querySelectorAll( '[data-factory-preset-variable]' ).forEach( function ( field ) {
+			field.addEventListener( 'input', function () {
+				const key = field.getAttribute( 'data-factory-preset-variable' );
+
+				if ( key ) {
+					state.presetVariables[ key ] = field.value;
+				}
+			} );
+		} );
+
 		root.querySelectorAll( '[data-factory-beta-action]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
 				const action = button.getAttribute( 'data-factory-beta-action' );
@@ -729,13 +809,39 @@
 		return state.prompt;
 	}
 
+	function currentPresetVariables() {
+		const variables = Object.assign( {}, state.presetVariables );
+
+		root.querySelectorAll( '[data-factory-preset-variable]' ).forEach( function ( field ) {
+			const key = field.getAttribute( 'data-factory-preset-variable' );
+
+			if ( key ) {
+				variables[ key ] = field.value;
+			}
+		} );
+
+		state.presetVariables = variables;
+
+		return variables;
+	}
+
 	function previewRealEstatePlan() {
 		const prompt = currentPrompt();
+		const presetVariables = currentPresetVariables();
 		state.betaAction = 'plan';
 		state.betaMessage = null;
 		render();
 
-		request( addQueryParam( config.endpoints?.realEstatePlan || '/beta/real-estate/plan', 'prompt', prompt ) )
+		request(
+			config.endpoints?.realEstatePlan || '/beta/real-estate/plan',
+			{
+				method: 'POST',
+				body: {
+					prompt: prompt,
+					preset_variables: presetVariables,
+				},
+			}
+		)
 			.then( function ( data ) {
 				state.betaPlan = data.plan || null;
 				state.betaProductPlan = data.product_plan || null;
@@ -753,6 +859,7 @@
 
 	function applyRealEstatePreset() {
 		const prompt = currentPrompt();
+		const presetVariables = currentPresetVariables();
 		state.betaAction = 'apply';
 		state.betaMessage = null;
 		render();
@@ -763,6 +870,7 @@
 				method: 'POST',
 				body: {
 					prompt: prompt,
+					preset_variables: presetVariables,
 				},
 			}
 		)
