@@ -230,6 +230,14 @@
 		state.previewStale = Boolean( state.previewPayloadKey ) && state.previewPayloadKey !== currentPayloadKeyFromState();
 	}
 
+	function canVisitWizardStep( step, allowNext ) {
+		if ( step >= 6 && ! isPreviewCurrent() ) {
+			return false;
+		}
+
+		return step <= state.maxWizardStep || ( allowNext && step === state.maxWizardStep + 1 );
+	}
+
 	function markWizardProgress( step ) {
 		state.maxWizardStep = Math.max( state.maxWizardStep, Math.min( step, wizardSteps.length - 1 ) );
 	}
@@ -240,7 +248,7 @@
 		updatePreviewFreshness();
 	}
 
-	function goWizardStep( step ) {
+	function goWizardStep( step, allowNext ) {
 		if ( state.betaAction ) {
 			return;
 		}
@@ -249,7 +257,7 @@
 
 		const nextStep = Math.max( 0, Math.min( step, wizardSteps.length - 1 ) );
 
-		if ( nextStep > state.maxWizardStep + 1 ) {
+		if ( ! canVisitWizardStep( nextStep, allowNext ) ) {
 			return;
 		}
 
@@ -577,7 +585,7 @@
 				wizardSteps.map( function ( step, index ) {
 					const isCurrent = index === state.wizardStep;
 					const isDone = index < state.wizardStep || index <= state.maxWizardStep;
-					const isLocked = index > state.maxWizardStep;
+					const isLocked = ! canVisitWizardStep( index, false );
 					const classes = [
 						'factory-wizard-step',
 						isCurrent ? 'factory-wizard-step-current' : '',
@@ -600,13 +608,15 @@
 	function renderWizardControls() {
 		const isBusy = Boolean( state.betaAction );
 		const isLast = state.wizardStep >= wizardSteps.length - 1;
+		const nextStep = state.wizardStep + 1;
+		const nextDisabled = isBusy || ( ! isLast && ! canVisitWizardStep( nextStep, true ) );
 
 		return [
 			'<div class="factory-wizard-controls">',
 				'<button type="button" class="button" data-factory-wizard-back' + ( state.wizardStep === 0 || isBusy ? ' disabled' : '' ) + '>Back</button>',
 				isLast
 					? ''
-					: '<button type="button" class="button button-primary" data-factory-wizard-next' + ( isBusy ? ' disabled' : '' ) + '>Next</button>',
+					: '<button type="button" class="button button-primary" data-factory-wizard-next' + ( nextDisabled ? ' disabled' : '' ) + '>Next</button>',
 			'</div>',
 		].join( '' );
 	}
@@ -620,7 +630,7 @@
 			return '<div class="factory-wizard-notice factory-wizard-notice-warning">Preview needs refresh.</div>';
 		}
 
-		return '<div class="factory-wizard-notice">Preview the plan before generating the demo.</div>';
+		return '<div class="factory-wizard-notice">Preview this setup before generating.</div>';
 	}
 
 	function renderWillChangeSummary() {
@@ -1025,7 +1035,7 @@
 
 		root.querySelectorAll( '[data-factory-wizard-next]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
-				goWizardStep( state.wizardStep + 1 );
+				goWizardStep( state.wizardStep + 1, true );
 			} );
 		} );
 
