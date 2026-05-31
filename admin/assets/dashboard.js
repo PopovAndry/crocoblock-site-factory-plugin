@@ -15,6 +15,15 @@
 		tone: 'premium',
 		primary_preset: 'turquoise',
 	};
+	const defaultImageContext = {
+		source: 'demo_pool',
+		mode: 'round_robin',
+	};
+	const imagePoolCounts = {
+		Apartment: 10,
+		House: 10,
+		Commercial: 10,
+	};
 	const styleToneOptions = [
 		[ 'premium', 'Premium' ],
 		[ 'minimal', 'Minimal' ],
@@ -123,6 +132,7 @@
 		prompt: realEstatePrompt,
 		presetVariables: Object.assign( {}, defaultPresetVariables ),
 		styleContext: Object.assign( {}, defaultStyleContext ),
+		imageContext: Object.assign( {}, defaultImageContext ),
 		wizardStep: 0,
 		maxWizardStep: 0,
 		previewPayloadKey: '',
@@ -346,11 +356,22 @@
 		return 'Tone: ' + ( context.tone || '-' ) + ' / Primary preset: ' + ( context.primary_preset || '-' );
 	}
 
+	function imageContextSummary( run ) {
+		const context = run && run.image_context && run.image_context.context ? run.image_context.context : null;
+
+		if ( ! context || typeof context !== 'object' ) {
+			return '-';
+		}
+
+		return 'Image source: Included demo image pools / Mode: ' + ( context.mode || '-' );
+	}
+
 	function currentPayloadKeyFromState() {
 		return JSON.stringify( {
 			prompt: state.prompt || '',
 			presetVariables: state.presetVariables || {},
 			styleContext: state.styleContext || {},
+			imageContext: state.imageContext || {},
 		} );
 	}
 
@@ -382,6 +403,7 @@
 		currentPrompt();
 		currentPresetVariables();
 		currentStyleContext();
+		currentImageContext();
 		updatePreviewFreshness();
 	}
 
@@ -598,6 +620,55 @@
 					} ).join( '' ),
 				'</div>',
 				'<div class="factory-wizard-notice">Will update generated Factory component colors. Will not change schema, content, filters, forms, images, typography, or layout.</div>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderImageContext() {
+		const context = state.imageContext || defaultImageContext;
+		const futureOptions = [
+			[ 'Neutral placeholders', 'Simple placeholder visuals are planned, but not active in this beta.' ],
+			[ 'Upload my images', 'Upload and Media Library picker flows are intentionally not included yet.' ],
+			[ 'AI generated images', 'AI image generation and external image APIs are not used in this beta.' ],
+		];
+
+		return [
+			'<div class="factory-image-context">',
+				'<div class="factory-preset-variables-heading">',
+					'<h3>Images</h3>',
+					'<span>Demo pools</span>',
+				'</div>',
+				'<p>Factory will use the bundled real estate image pools already included with the plugin.</p>',
+				'<article class="factory-image-source-card factory-image-source-card-active">',
+					'<div>',
+						'<strong>Included demo image pools</strong>',
+						'<span>Source: ' + escapeHtml( context.source || defaultImageContext.source ) + '</span>',
+						'<span>Mode: ' + escapeHtml( context.mode || defaultImageContext.mode ) + '</span>',
+					'</div>',
+					'<p>Using bundled real estate image pools. Images are assigned as featured images for property cards and single property pages.</p>',
+				'</article>',
+				'<div class="factory-image-pools" aria-label="Bundled image pool counts">',
+					Object.keys( imagePoolCounts ).map( function ( label ) {
+						return [
+							'<div class="factory-image-pool">',
+								'<span>' + escapeHtml( label ) + '</span>',
+								'<strong>' + escapeHtml( imagePoolCounts[ label ] ) + '</strong>',
+							'</div>',
+						].join( '' );
+					} ).join( '' ),
+				'</div>',
+				'<div class="factory-image-future-grid">',
+					futureOptions.map( function ( option ) {
+						return [
+							'<article class="factory-image-source-card factory-image-source-card-disabled" aria-disabled="true">',
+								'<strong>' + escapeHtml( option[0] ) + '</strong>',
+								'<p>' + escapeHtml( option[1] ) + '</p>',
+								'<span>Future</span>',
+							'</article>',
+						].join( '' );
+					} ).join( '' ),
+				'</div>',
+				'<div class="factory-wizard-notice">Will use bundled images only. Will not upload user images, open the Media Library picker, import ZIP files, generate AI images, or call external image APIs.</div>',
 			'</div>',
 		].join( '' );
 	}
@@ -873,6 +944,7 @@
 						'<li>Selected Home hero copy</li>',
 						'<li>Selected Contact page copy</li>',
 						'<li>Generated Factory component color tokens</li>',
+						'<li>Bundled image pool proof context</li>',
 						'<li>Run manifest prompt and safe variable proof</li>',
 						'<li>Generated pages when Generate runs</li>',
 					'</ul>',
@@ -882,6 +954,7 @@
 					'<ul>',
 						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, Kava Customizer colors, Elementor Global Colors, and adapter order</li>',
 						'<li>Property count, property titles, content, districts, terms, images, and native proof page behavior</li>',
+						'<li>Image uploads, Media Library picker, ZIP import, AI generation, and external image APIs</li>',
 						'<li>/properties/, /properties-native/, and /contact/ routing behavior</li>',
 					'</ul>',
 				'</section>',
@@ -948,10 +1021,8 @@
 
 		if ( step === 4 ) {
 			return [
-				'<section class="factory-wizard-step-panel factory-wizard-placeholder">',
-					'<h3>Images</h3>',
-					'<p>Coming next. This demo currently uses bundled Apartment, House, and Commercial image pools.</p>',
-					'<div>Image upload is intentionally not included in Wizard v1.</div>',
+				'<section class="factory-wizard-step-panel">',
+					renderImageContext(),
 				'</section>',
 			].join( '' );
 		}
@@ -1005,6 +1076,7 @@
 							'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
 							'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
 							'<dt>Style tokens</dt><dd>' + escapeHtml( styleContextSummary( run ) ) + '</dd>',
+							'<dt>Image source</dt><dd>' + escapeHtml( imageContextSummary( run ) ) + '</dd>',
 							'<dt>Execution</dt><dd>' + escapeHtml( executionCount( run ) ) + ' items</dd>',
 							'<dt>Validation</dt><dd>' + escapeHtml( validationCount( run ) ) + ' checks</dd>',
 							'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
@@ -1396,10 +1468,17 @@
 		return context;
 	}
 
+	function currentImageContext() {
+		state.imageContext = Object.assign( {}, defaultImageContext, state.imageContext );
+
+		return state.imageContext;
+	}
+
 	function previewRealEstatePlan() {
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
 		const styleContext = currentStyleContext();
+		const imageContext = currentImageContext();
 		const payloadKey = currentPayloadKeyFromState();
 		state.betaAction = 'plan';
 		state.betaMessage = null;
@@ -1413,6 +1492,7 @@
 					prompt: prompt,
 					preset_variables: presetVariables,
 					style_context: styleContext,
+					image_context: imageContext,
 				},
 			}
 		)
@@ -1438,6 +1518,7 @@
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
 		const styleContext = currentStyleContext();
+		const imageContext = currentImageContext();
 
 		if ( ! isPreviewCurrent() ) {
 			state.betaMessage = {
@@ -1469,6 +1550,7 @@
 					prompt: prompt,
 					preset_variables: presetVariables,
 					style_context: styleContext,
+					image_context: imageContext,
 				},
 			}
 		)

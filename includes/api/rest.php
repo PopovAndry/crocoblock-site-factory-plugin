@@ -200,12 +200,13 @@ function factory_register_rest_routes(): void {
             $base_blueprint = factory_rest_load_real_estate_blueprint();
             $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard preview: real-estate' );
             $style_context = factory_rest_get_real_estate_style_context( $request );
+            $image_context = factory_rest_get_real_estate_image_context( $request, $base_blueprint );
             $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
             $blueprint    = factory_rest_apply_real_estate_style_tokens( $blueprint, $style_context['tokens'] );
             $prompt       = $prompt_context['prompt'];
             $plan         = factory_rest_build_plan( $blueprint );
             $dependencies = factory_rest_get_real_estate_dependency_status();
-            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt, $prompt_context, $style_context );
+            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt, $prompt_context, $style_context, $image_context );
 
             return new WP_REST_Response(
                 [
@@ -217,6 +218,8 @@ function factory_register_rest_routes(): void {
                     'prompt_notes'      => $prompt_context['notes'],
                     'style_context'     => $style_context['context'],
                     'style_tokens'      => $style_context['tokens'],
+                    'image_context'     => $image_context['context'],
+                    'image_notes'       => $image_context['notes'],
                     'plan'              => $plan,
                     'dependencies'      => $dependencies,
                     'product_plan'      => $product_plan,
@@ -240,6 +243,7 @@ function factory_register_rest_routes(): void {
             $base_blueprint = factory_rest_load_real_estate_blueprint();
             $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard apply: real-estate' );
             $style_context = factory_rest_get_real_estate_style_context( $request );
+            $image_context = factory_rest_get_real_estate_image_context( $request, $base_blueprint );
             $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
             $blueprint    = factory_rest_apply_real_estate_style_tokens( $blueprint, $style_context['tokens'] );
             $prompt       = $prompt_context['prompt'];
@@ -274,6 +278,7 @@ function factory_register_rest_routes(): void {
                 [
                     'prompt_context' => $prompt_context,
                     'style_context'  => $style_context,
+                    'image_context'  => $image_context,
                 ]
             );
 
@@ -298,6 +303,8 @@ function factory_register_rest_routes(): void {
                     'prompt_notes'      => $prompt_context['notes'],
                     'style_context'     => $style_context['context'],
                     'style_tokens'      => $style_context['tokens'],
+                    'image_context'     => $image_context['context'],
+                    'image_notes'       => $image_context['notes'],
                     'file'              => basename( $manifest_path ),
                     'plan_summary'      => $plan['summary'] ?? [],
                     'execution_count'   => count( $execution ),
@@ -521,6 +528,63 @@ function factory_register_rest_routes(): void {
         return $tokens;
     }
 
+    function factory_rest_get_real_estate_image_context( WP_REST_Request $request, array $blueprint ): array {
+        $received = $request->get_param( 'image_context' );
+
+        if ( ! is_array( $received ) ) {
+            $received = [];
+        }
+
+        $source = sanitize_key( $received['source'] ?? 'demo_pool' );
+        $mode = sanitize_key( $received['mode'] ?? 'round_robin' );
+        $notes = [
+            'Using bundled real estate image pools.',
+            'Images are assigned as featured images for property cards and single pages.',
+            'No uploads, Media Library picker, external image API, or AI image generation is used.',
+        ];
+
+        if ( 'demo_pool' !== $source ) {
+            $source = 'demo_pool';
+            $notes[] = 'Used default image source.';
+        }
+
+        if ( 'round_robin' !== $mode ) {
+            $mode = 'round_robin';
+            $notes[] = 'Used default image assignment mode.';
+        }
+
+        $pools = [];
+        $asset_pools = $blueprint['site']['assets']['property_images'] ?? [];
+
+        if ( is_array( $asset_pools ) ) {
+            foreach ( $asset_pools as $type => $sources ) {
+                if ( ! is_string( $type ) || '' === trim( $type ) ) {
+                    continue;
+                }
+
+                $pools[ $type ] = is_array( $sources )
+                    ? count(
+                        array_filter(
+                            $sources,
+                            function ( $source_path ) {
+                                return is_string( $source_path ) && '' !== trim( $source_path );
+                            }
+                        )
+                    )
+                    : ( is_string( $sources ) && '' !== trim( $sources ) ? 1 : 0 );
+            }
+        }
+
+        return [
+            'context' => [
+                'source' => $source,
+                'mode'   => $mode,
+                'pools'  => $pools,
+            ],
+            'notes'   => array_values( array_unique( $notes ) ),
+        ];
+    }
+
     function factory_rest_sanitize_preset_variable( $value, array $schema ): string {
         if ( is_array( $value ) || is_object( $value ) ) {
             return '';
@@ -644,7 +708,8 @@ function factory_register_rest_routes(): void {
         array $dependencies,
         string $prompt = '',
         array $prompt_context = [],
-        array $style_context = []
+        array $style_context = [],
+        array $image_context = []
     ): array {
         $property_count = isset( $blueprint['content']['property'] ) && is_array( $blueprint['content']['property'] )
             ? count( $blueprint['content']['property'] )
@@ -704,6 +769,35 @@ function factory_register_rest_routes(): void {
             }
         }
 
+        $image = is_array( $image_context['context'] ?? null ) ? $image_context['context'] : [];
+        $image_pools = is_array( $image['pools'] ?? null ) ? $image['pools'] : [];
+        $image_items = [
+            'Included demo image pools',
+            'Source: ' . ( $image['source'] ?? 'demo_pool' ),
+            'Mode: ' . ( $image['mode'] ?? 'round_robin' ),
+        ];
+
+        if ( ! empty( $image_pools ) ) {
+            foreach ( $image_pools as $pool_label => $pool_count ) {
+                $image_items[] = sprintf( '%s image pool: %d', $pool_label, (int) $pool_count );
+            }
+        } elseif ( ! empty( $asset_labels ) ) {
+            foreach ( $asset_labels as $asset_label ) {
+                $image_items[] = $asset_label;
+            }
+        }
+
+        $image_items = array_merge(
+            $image_items,
+            [
+                'Will assign bundled images to property cards and single property pages',
+                'Will not upload user images',
+                'Will not generate AI images',
+                'Will not use external image APIs',
+            ],
+            is_array( $image_context['notes'] ?? null ) ? $image_context['notes'] : []
+        );
+
         $variable_items = [];
 
         foreach ( $applied_variables as $key => $value ) {
@@ -745,6 +839,11 @@ function factory_register_rest_routes(): void {
                             'Will not change Kava Customizer colors, Elementor Global Colors, typography, images, schema, filters, forms, content, or layout',
                         ]
                     ),
+                ],
+                [
+                    'label'  => 'Image source',
+                    'status' => empty( $asset_labels ) ? 'warning' : 'ready',
+                    'items'  => $image_items,
                 ],
                 [
                     'label'  => 'Guardrails',
