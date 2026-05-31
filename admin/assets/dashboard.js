@@ -95,7 +95,7 @@
 		{ title: 'Requirements', subtitle: 'Theme and plugins' },
 		{ title: 'Describe Business', subtitle: 'Preset and prompt' },
 		{ title: 'Business Info', subtitle: 'Safe copy fields' },
-		{ title: 'Style & Colors', subtitle: 'Coming next' },
+		{ title: 'Style & Colors', subtitle: 'Design tokens' },
 		{ title: 'Images', subtitle: 'Demo pools' },
 		{ title: 'Preview Plan', subtitle: 'Review changes' },
 		{ title: 'Generate / Proof', subtitle: 'Create and open' },
@@ -198,6 +198,44 @@
 	function badge( value ) {
 		const status = statusValue( value );
 		return '<span class="factory-badge factory-badge-' + status + '">' + escapeHtml( status ) + '</span>';
+	}
+
+	function hasDoctorLoadError() {
+		return state.errors.some( function ( error ) {
+			return String( error || '' ).startsWith( 'Doctor:' );
+		} );
+	}
+
+	function doctorStatusValue() {
+		if ( hasDoctorLoadError() ) {
+			return 'error';
+		}
+
+		if ( ! state.doctor ) {
+			return 'unknown';
+		}
+
+		const doctorStatus = statusValue( state.doctor.status );
+		const issues = Array.isArray( state.doctor.issues ) ? state.doctor.issues : [];
+		const issueStatuses = issues.map( function ( issue ) {
+			return statusValue( issue.status );
+		} );
+
+		if ( doctorStatus === 'error' || issueStatuses.includes( 'error' ) ) {
+			return 'error';
+		}
+
+		if ( doctorStatus === 'warning' || issueStatuses.includes( 'warning' ) ) {
+			return 'warning';
+		}
+
+		if ( doctorStatus === 'ok' ) {
+			return issueStatuses.some( function ( status ) {
+				return ! [ 'ok', 'unknown' ].includes( status );
+			} ) ? 'warning' : 'ok';
+		}
+
+		return doctorStatus;
 	}
 
 	function count( value ) {
@@ -626,7 +664,7 @@
 	}
 
 	function renderHeader() {
-		const doctorStatus = state.doctor ? state.doctor.status : 'unknown';
+		const doctorStatus = doctorStatusValue();
 		const latestStatus = runFromLatest().status || 'unknown';
 
 		return [
@@ -658,10 +696,11 @@
 	function renderSystemStatus() {
 		const doctor = state.doctor || {};
 		const issues = Array.isArray( doctor.issues ) ? doctor.issues : [];
+		const doctorStatus = doctorStatusValue();
 
 		return [
 			'<section class="factory-card">',
-				'<div class="factory-card-heading"><h2>System Status</h2>' + badge( doctor.status ) + '</div>',
+				'<div class="factory-card-heading"><h2>System Status</h2>' + badge( doctorStatus ) + '</div>',
 				'<dl class="factory-definition-list">',
 					'<dt>Latest run</dt><dd>' + escapeHtml( doctor.latest_run || '-' ) + '</dd>',
 					'<dt>Prompt</dt><dd>' + escapeHtml( doctor.prompt || '-' ) + '</dd>',
@@ -856,7 +895,7 @@
 		const plan = run.plan && run.plan.summary ? run.plan.summary : {};
 		const results = run.results && run.results.summary ? run.results.summary : {};
 		const siteGenerated = Boolean( run.file ) && executionCount( run ) > 0;
-		const doctorOk = statusValue( state.doctor && state.doctor.status ) === 'ok';
+		const doctorOk = doctorStatusValue() === 'ok';
 		const validationOk = latestValidationOk();
 		const isBusy = Boolean( state.betaAction );
 
@@ -991,7 +1030,7 @@
 	function renderRealEstateDemo() {
 		const run = runFromLatest();
 		const siteGenerated = Boolean( run.file ) && executionCount( run ) > 0;
-		const doctorOk = statusValue( state.doctor && state.doctor.status ) === 'ok';
+		const doctorOk = doctorStatusValue() === 'ok';
 		const validationOk = latestValidationOk();
 
 		return [
