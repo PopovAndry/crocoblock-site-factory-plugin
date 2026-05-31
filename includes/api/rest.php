@@ -199,11 +199,13 @@ function factory_register_rest_routes(): void {
         try {
             $base_blueprint = factory_rest_load_real_estate_blueprint();
             $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard preview: real-estate' );
+            $style_context = factory_rest_get_real_estate_style_context( $request );
             $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
+            $blueprint    = factory_rest_apply_real_estate_style_tokens( $blueprint, $style_context['tokens'] );
             $prompt       = $prompt_context['prompt'];
             $plan         = factory_rest_build_plan( $blueprint );
             $dependencies = factory_rest_get_real_estate_dependency_status();
-            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt, $prompt_context );
+            $product_plan = factory_rest_build_real_estate_product_plan( $blueprint, $plan, $dependencies, $prompt, $prompt_context, $style_context );
 
             return new WP_REST_Response(
                 [
@@ -213,6 +215,8 @@ function factory_register_rest_routes(): void {
                     'preset_variables'  => $prompt_context['preset_variables'],
                     'applied_variables' => $prompt_context['applied_variables'],
                     'prompt_notes'      => $prompt_context['notes'],
+                    'style_context'     => $style_context['context'],
+                    'style_tokens'      => $style_context['tokens'],
                     'plan'              => $plan,
                     'dependencies'      => $dependencies,
                     'product_plan'      => $product_plan,
@@ -235,7 +239,9 @@ function factory_register_rest_routes(): void {
         try {
             $base_blueprint = factory_rest_load_real_estate_blueprint();
             $prompt_context = factory_rest_get_real_estate_prompt_context( $request, $base_blueprint, 'Dashboard apply: real-estate' );
+            $style_context = factory_rest_get_real_estate_style_context( $request );
             $blueprint    = factory_rest_apply_real_estate_preset_variables( $base_blueprint, $prompt_context['applied_variables'] );
+            $blueprint    = factory_rest_apply_real_estate_style_tokens( $blueprint, $style_context['tokens'] );
             $prompt       = $prompt_context['prompt'];
             $dependencies = factory_rest_get_real_estate_dependency_status();
 
@@ -267,6 +273,7 @@ function factory_register_rest_routes(): void {
                 $execution,
                 [
                     'prompt_context' => $prompt_context,
+                    'style_context'  => $style_context,
                 ]
             );
 
@@ -289,6 +296,8 @@ function factory_register_rest_routes(): void {
                     'preset_variables'  => $prompt_context['preset_variables'],
                     'applied_variables' => $prompt_context['applied_variables'],
                     'prompt_notes'      => $prompt_context['notes'],
+                    'style_context'     => $style_context['context'],
+                    'style_tokens'      => $style_context['tokens'],
                     'file'              => basename( $manifest_path ),
                     'plan_summary'      => $plan['summary'] ?? [],
                     'execution_count'   => count( $execution ),
@@ -393,6 +402,125 @@ function factory_register_rest_routes(): void {
         ];
     }
 
+    function factory_rest_get_real_estate_style_context( WP_REST_Request $request ): array {
+        $received = $request->get_param( 'style_context' );
+
+        if ( ! is_array( $received ) ) {
+            $received = [];
+        }
+
+        $tones = [ 'premium', 'minimal', 'modern', 'corporate', 'warm' ];
+        $presets = [ 'turquoise', 'blue', 'green', 'beige' ];
+        $tone = sanitize_key( $received['tone'] ?? 'premium' );
+        $primary_preset = sanitize_key( $received['primary_preset'] ?? 'turquoise' );
+        $notes = [
+            'Factory design tokens are deterministic; no AI palette generation is used.',
+            'No Kava Customizer, Elementor Global Colors, typography, image, schema, filter, form, or layout changes are applied.',
+        ];
+
+        if ( ! in_array( $tone, $tones, true ) ) {
+            $tone = 'premium';
+            $notes[] = 'Used default style tone.';
+        }
+
+        if ( ! in_array( $primary_preset, $presets, true ) ) {
+            $primary_preset = 'turquoise';
+            $notes[] = 'Used default primary color preset.';
+        }
+
+        $context = [
+            'tone'           => $tone,
+            'primary_preset' => $primary_preset,
+        ];
+
+        return [
+            'context' => $context,
+            'tokens'  => factory_rest_derive_real_estate_style_tokens( $context ),
+            'notes'   => array_values( array_unique( $notes ) ),
+        ];
+    }
+
+    function factory_rest_derive_real_estate_style_tokens( array $context ): array {
+        $primary_preset = $context['primary_preset'] ?? 'turquoise';
+        $tone = $context['tone'] ?? 'premium';
+        $palettes = [
+            'turquoise' => [
+                'primary'    => '#0f766e',
+                'accent'     => '#14b8a6',
+                'background' => '#ecfeff',
+                'surface'    => '#ffffff',
+                'text'       => '#10201d',
+                'muted'      => '#52635f',
+                'border'     => '#d7eee9',
+                'link_hover' => '#0d9488',
+            ],
+            'blue' => [
+                'primary'    => '#1d4ed8',
+                'accent'     => '#38bdf8',
+                'background' => '#eff6ff',
+                'surface'    => '#ffffff',
+                'text'       => '#102033',
+                'muted'      => '#53657a',
+                'border'     => '#dbeafe',
+                'link_hover' => '#2563eb',
+            ],
+            'green' => [
+                'primary'    => '#15803d',
+                'accent'     => '#22c55e',
+                'background' => '#f0fdf4',
+                'surface'    => '#ffffff',
+                'text'       => '#10251a',
+                'muted'      => '#53665a',
+                'border'     => '#dcfce7',
+                'link_hover' => '#16a34a',
+            ],
+            'beige' => [
+                'primary'    => '#8a5a2b',
+                'accent'     => '#d6a45f',
+                'background' => '#fff7ed',
+                'surface'    => '#ffffff',
+                'text'       => '#2a2118',
+                'muted'      => '#675d52',
+                'border'     => '#f1dcc4',
+                'link_hover' => '#a16207',
+            ],
+        ];
+        $tone_overrides = [
+            'premium' => [],
+            'minimal' => [
+                'background' => '#f8fafc',
+                'border'     => '#e2e8f0',
+                'muted'      => '#64748b',
+            ],
+            'modern' => [
+                'surface' => '#ffffff',
+            ],
+            'corporate' => [
+                'text'    => '#111827',
+                'muted'   => '#4b5563',
+                'surface' => '#ffffff',
+            ],
+            'warm' => [
+                'background' => '#fff7ed',
+                'surface'    => '#fffaf4',
+                'border'     => '#f1dcc4',
+            ],
+        ];
+        $tokens = array_merge(
+            $palettes[ $primary_preset ] ?? $palettes['turquoise'],
+            $tone_overrides[ $tone ] ?? []
+        );
+
+        $tokens['tone'] = $tone;
+        $tokens['primary_preset'] = $primary_preset;
+        $tokens['button'] = $tokens['accent'];
+        $tokens['button_text'] = '#ffffff';
+        $tokens['link'] = $tokens['primary'];
+        $tokens['heading'] = $tokens['text'];
+
+        return $tokens;
+    }
+
     function factory_rest_sanitize_preset_variable( $value, array $schema ): string {
         if ( is_array( $value ) || is_object( $value ) ) {
             return '';
@@ -470,6 +598,15 @@ function factory_register_rest_routes(): void {
         return $blueprint;
     }
 
+    function factory_rest_apply_real_estate_style_tokens( array $blueprint, array $tokens ): array {
+        $blueprint['site']['style'] = array_merge(
+            is_array( $blueprint['site']['style'] ?? null ) ? $blueprint['site']['style'] : [],
+            $tokens
+        );
+
+        return $blueprint;
+    }
+
     function factory_rest_build_plan( array $blueprint ): array {
         $dry_run = new Factory_Dry_Run_Command();
         $items   = $dry_run->get_plan_items( $blueprint );
@@ -506,7 +643,8 @@ function factory_register_rest_routes(): void {
         array $plan,
         array $dependencies,
         string $prompt = '',
-        array $prompt_context = []
+        array $prompt_context = [],
+        array $style_context = []
     ): array {
         $property_count = isset( $blueprint['content']['property'] ) && is_array( $blueprint['content']['property'] )
             ? count( $blueprint['content']['property'] )
@@ -553,6 +691,19 @@ function factory_register_rest_routes(): void {
         $prompt_notes = is_array( $prompt_context['notes'] ?? null )
             ? $prompt_context['notes']
             : [];
+        $style = is_array( $style_context['context'] ?? null ) ? $style_context['context'] : [];
+        $style_tokens = is_array( $style_context['tokens'] ?? null ) ? $style_context['tokens'] : [];
+        $style_items = [
+            'Tone: ' . ucwords( str_replace( '_', ' ', (string) ( $style['tone'] ?? 'premium' ) ) ),
+            'Primary preset: ' . ucwords( str_replace( '_', ' ', (string) ( $style['primary_preset'] ?? 'turquoise' ) ) ),
+        ];
+
+        foreach ( [ 'primary', 'accent', 'background', 'surface', 'text', 'muted', 'border' ] as $token_key ) {
+            if ( isset( $style_tokens[ $token_key ] ) ) {
+                $style_items[] = "{$token_key}: {$style_tokens[ $token_key ]}";
+            }
+        }
+
         $variable_items = [];
 
         foreach ( $applied_variables as $key => $value ) {
@@ -583,6 +734,17 @@ function factory_register_rest_routes(): void {
                             $variable_items,
                             $prompt_notes
                         ),
+                ],
+                [
+                    'label'  => 'Style tokens',
+                    'status' => 'ready',
+                    'items'  => array_merge(
+                        $style_items,
+                        [
+                            'Will update generated Factory component colors',
+                            'Will not change Kava Customizer colors, Elementor Global Colors, typography, images, schema, filters, forms, content, or layout',
+                        ]
+                    ),
                 ],
                 [
                     'label'  => 'Guardrails',

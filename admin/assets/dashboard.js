@@ -11,6 +11,86 @@
 		contact_title: 'Contact Kyiv Turquoise Realty',
 		contact_intro: 'Schedule a viewing or request more details about Kyiv properties.',
 	};
+	const defaultStyleContext = {
+		tone: 'premium',
+		primary_preset: 'turquoise',
+	};
+	const styleToneOptions = [
+		[ 'premium', 'Premium' ],
+		[ 'minimal', 'Minimal' ],
+		[ 'modern', 'Modern' ],
+		[ 'corporate', 'Corporate' ],
+		[ 'warm', 'Warm' ],
+	];
+	const colorPresetOptions = [
+		[ 'turquoise', 'Turquoise' ],
+		[ 'blue', 'Blue' ],
+		[ 'green', 'Green' ],
+		[ 'beige', 'Beige' ],
+	];
+	const colorPresetTokens = {
+		turquoise: {
+			primary: '#0f766e',
+			accent: '#14b8a6',
+			background: '#ecfeff',
+			surface: '#ffffff',
+			text: '#10201d',
+			muted: '#52635f',
+			border: '#d7eee9',
+			link_hover: '#0d9488',
+		},
+		blue: {
+			primary: '#1d4ed8',
+			accent: '#38bdf8',
+			background: '#eff6ff',
+			surface: '#ffffff',
+			text: '#102033',
+			muted: '#53657a',
+			border: '#dbeafe',
+			link_hover: '#2563eb',
+		},
+		green: {
+			primary: '#15803d',
+			accent: '#22c55e',
+			background: '#f0fdf4',
+			surface: '#ffffff',
+			text: '#10251a',
+			muted: '#53665a',
+			border: '#dcfce7',
+			link_hover: '#16a34a',
+		},
+		beige: {
+			primary: '#8a5a2b',
+			accent: '#d6a45f',
+			background: '#fff7ed',
+			surface: '#ffffff',
+			text: '#2a2118',
+			muted: '#675d52',
+			border: '#f1dcc4',
+			link_hover: '#a16207',
+		},
+	};
+	const styleToneOverrides = {
+		premium: {},
+		minimal: {
+			background: '#f8fafc',
+			border: '#e2e8f0',
+			muted: '#64748b',
+		},
+		modern: {
+			surface: '#ffffff',
+		},
+		corporate: {
+			text: '#111827',
+			muted: '#4b5563',
+			surface: '#ffffff',
+		},
+		warm: {
+			background: '#fff7ed',
+			surface: '#fffaf4',
+			border: '#f1dcc4',
+		},
+	};
 	const wizardSteps = [
 		{ title: 'Requirements', subtitle: 'Theme and plugins' },
 		{ title: 'Describe Business', subtitle: 'Preset and prompt' },
@@ -42,6 +122,7 @@
 		betaProductPlan: null,
 		prompt: realEstatePrompt,
 		presetVariables: Object.assign( {}, defaultPresetVariables ),
+		styleContext: Object.assign( {}, defaultStyleContext ),
 		wizardStep: 0,
 		maxWizardStep: 0,
 		previewPayloadKey: '',
@@ -217,10 +298,21 @@
 		} ).join( ' / ' );
 	}
 
+	function styleContextSummary( run ) {
+		const context = run && run.style_context && run.style_context.context ? run.style_context.context : null;
+
+		if ( ! context || typeof context !== 'object' ) {
+			return '-';
+		}
+
+		return 'Tone: ' + ( context.tone || '-' ) + ' / Primary preset: ' + ( context.primary_preset || '-' );
+	}
+
 	function currentPayloadKeyFromState() {
 		return JSON.stringify( {
 			prompt: state.prompt || '',
 			presetVariables: state.presetVariables || {},
+			styleContext: state.styleContext || {},
 		} );
 	}
 
@@ -251,6 +343,7 @@
 	function syncWizardInputs() {
 		currentPrompt();
 		currentPresetVariables();
+		currentStyleContext();
 		updatePreviewFreshness();
 	}
 
@@ -390,6 +483,83 @@
 						return '<label><span>' + escapeHtml( presetVariableLabel( key ) ) + '</span><input type="text" data-factory-preset-variable="' + escapeHtml( key ) + '" value="' + escapeHtml( value ) + '"></label>';
 					} ).join( '' ),
 				'</div>',
+			'</div>',
+		].join( '' );
+	}
+
+	function deriveStyleTokens( context ) {
+		const primaryPreset = colorPresetTokens[ context.primary_preset ] ? context.primary_preset : defaultStyleContext.primary_preset;
+		const tone = styleToneOverrides[ context.tone ] ? context.tone : defaultStyleContext.tone;
+		const tokens = Object.assign(
+			{},
+			colorPresetTokens[ primaryPreset ],
+			styleToneOverrides[ tone ]
+		);
+
+		tokens.tone = tone;
+		tokens.primary_preset = primaryPreset;
+		tokens.button = tokens.accent;
+		tokens.button_text = '#ffffff';
+		tokens.link = tokens.primary;
+		tokens.heading = tokens.text;
+
+		return tokens;
+	}
+
+	function styleOptionButton( group, value, label, current, swatch ) {
+		const checked = current === value;
+
+		return [
+			'<label class="factory-style-option' + ( checked ? ' factory-style-option-selected' : '' ) + '">',
+				'<input type="radio" name="' + escapeHtml( group ) + '" data-factory-style-context="' + escapeHtml( group ) + '" value="' + escapeHtml( value ) + '"' + ( checked ? ' checked' : '' ) + '>',
+				swatch ? '<span class="factory-style-swatch" style="background: ' + escapeHtml( swatch ) + ';"></span>' : '',
+				'<span>' + escapeHtml( label ) + '</span>',
+			'</label>',
+		].join( '' );
+	}
+
+	function renderStyleContext() {
+		const context = state.styleContext || defaultStyleContext;
+		const tokens = deriveStyleTokens( context );
+		const tokenKeys = [ 'primary', 'accent', 'background', 'surface', 'text', 'muted', 'border' ];
+
+		return [
+			'<div class="factory-style-context">',
+				'<div class="factory-preset-variables-heading">',
+					'<h3>Style & colors</h3>',
+					'<span>Design tokens</span>',
+				'</div>',
+				'<p>Choose deterministic Factory tokens for generated components. Kava Customizer colors and Elementor Global Colors are not changed in this beta.</p>',
+				'<div class="factory-style-control">',
+					'<h4>Style tone</h4>',
+					'<div class="factory-style-option-grid">',
+						styleToneOptions.map( function ( option ) {
+							return styleOptionButton( 'tone', option[0], option[1], context.tone, '' );
+						} ).join( '' ),
+					'</div>',
+				'</div>',
+				'<div class="factory-style-control">',
+					'<h4>Primary color preset</h4>',
+					'<div class="factory-style-option-grid">',
+						colorPresetOptions.map( function ( option ) {
+							const swatch = colorPresetTokens[ option[0] ] ? colorPresetTokens[ option[0] ].primary : '';
+
+							return styleOptionButton( 'primary_preset', option[0], option[1], context.primary_preset, swatch );
+						} ).join( '' ),
+					'</div>',
+				'</div>',
+				'<div class="factory-style-palette" aria-label="Generated token preview">',
+					tokenKeys.map( function ( key ) {
+						return [
+							'<div class="factory-style-token">',
+								'<span style="background: ' + escapeHtml( tokens[ key ] ) + ';"></span>',
+								'<strong>' + escapeHtml( key ) + '</strong>',
+								'<code>' + escapeHtml( tokens[ key ] ) + '</code>',
+							'</div>',
+						].join( '' );
+					} ).join( '' ),
+				'</div>',
+				'<div class="factory-wizard-notice">Will update generated Factory component colors. Will not change schema, content, filters, forms, images, typography, or layout.</div>',
 			'</div>',
 		].join( '' );
 	}
@@ -663,6 +833,7 @@
 					'<ul>',
 						'<li>Selected Home hero copy</li>',
 						'<li>Selected Contact page copy</li>',
+						'<li>Generated Factory component color tokens</li>',
 						'<li>Run manifest prompt and safe variable proof</li>',
 						'<li>Generated pages when Generate runs</li>',
 					'</ul>',
@@ -670,7 +841,7 @@
 				'<section>',
 					'<h4>Will not change</h4>',
 					'<ul>',
-						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, and adapter order</li>',
+						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, Kava Customizer colors, Elementor Global Colors, and adapter order</li>',
 						'<li>Property count, property titles, content, districts, terms, images, and native proof page behavior</li>',
 						'<li>/properties/, /properties-native/, and /contact/ routing behavior</li>',
 					'</ul>',
@@ -730,10 +901,8 @@
 
 		if ( step === 3 ) {
 			return [
-				'<section class="factory-wizard-step-panel factory-wizard-placeholder">',
-					'<h3>Style & colors</h3>',
-					'<p>Coming next. This demo currently uses the prepared turquoise Kava/Factory style tokens.</p>',
-					'<div>Color controls are intentionally disabled in Wizard v1.</div>',
+				'<section class="factory-wizard-step-panel">',
+					renderStyleContext(),
 				'</section>',
 			].join( '' );
 		}
@@ -796,6 +965,7 @@
 							'<dt>Run file</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 							'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
 							'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
+							'<dt>Style tokens</dt><dd>' + escapeHtml( styleContextSummary( run ) ) + '</dd>',
 							'<dt>Execution</dt><dd>' + escapeHtml( executionCount( run ) ) + ' items</dd>',
 							'<dt>Validation</dt><dd>' + escapeHtml( validationCount( run ) ) + ' checks</dd>',
 							'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
@@ -1088,6 +1258,18 @@
 			} );
 		} );
 
+		root.querySelectorAll( '[data-factory-style-context]' ).forEach( function ( field ) {
+			field.addEventListener( 'change', function () {
+				const key = field.getAttribute( 'data-factory-style-context' );
+
+				if ( key ) {
+					state.styleContext[ key ] = field.value;
+					updatePreviewFreshness();
+					render();
+				}
+			} );
+		} );
+
 		root.querySelectorAll( '[data-factory-beta-action]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
 				const action = button.getAttribute( 'data-factory-beta-action' );
@@ -1159,9 +1341,26 @@
 		return variables;
 	}
 
+	function currentStyleContext() {
+		const context = Object.assign( {}, state.styleContext );
+
+		root.querySelectorAll( '[data-factory-style-context]:checked' ).forEach( function ( field ) {
+			const key = field.getAttribute( 'data-factory-style-context' );
+
+			if ( key ) {
+				context[ key ] = field.value;
+			}
+		} );
+
+		state.styleContext = context;
+
+		return context;
+	}
+
 	function previewRealEstatePlan() {
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
+		const styleContext = currentStyleContext();
 		const payloadKey = currentPayloadKeyFromState();
 		state.betaAction = 'plan';
 		state.betaMessage = null;
@@ -1174,6 +1373,7 @@
 				body: {
 					prompt: prompt,
 					preset_variables: presetVariables,
+					style_context: styleContext,
 				},
 			}
 		)
@@ -1198,6 +1398,7 @@
 	function applyRealEstatePreset() {
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
+		const styleContext = currentStyleContext();
 
 		if ( ! isPreviewCurrent() ) {
 			state.betaMessage = {
@@ -1228,6 +1429,7 @@
 				body: {
 					prompt: prompt,
 					preset_variables: presetVariables,
+					style_context: styleContext,
 				},
 			}
 		)

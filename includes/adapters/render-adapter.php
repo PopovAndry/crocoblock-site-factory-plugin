@@ -243,7 +243,29 @@ class Factory_Render_Adapter {
 			$results[] = $request_viewing_check;
 		}
 
+		foreach ( $this->validate_style_tokens( $blueprint ) as $style_check ) {
+			$results[] = $style_check;
+		}
+
 		return $results;
+	}
+
+	private function validate_style_tokens( array $blueprint ): array {
+		$checks = [];
+		$tokens = $this->get_site_style_tokens( $blueprint );
+
+		foreach ( [ 'primary', 'accent', 'background', 'surface', 'text', 'muted', 'border', 'button', 'button_text', 'link', 'link_hover', 'heading' ] as $key ) {
+			$value = $tokens[ $key ] ?? '';
+
+			$checks[] = [
+				'status'  => preg_match( '/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $value ) ? 'ok' : 'error',
+				'message' => preg_match( '/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $value )
+					? "Factory style token valid: {$key}"
+					: "Factory style token invalid: {$key}",
+			];
+		}
+
+		return $checks;
 	}
 
 	private function upsert_listing_page( array $listing ): ?array {
@@ -1538,39 +1560,43 @@ class Factory_Render_Adapter {
 		$reset_url = $this->get_property_filter_reset_url();
 		$count     = (int) $query->found_posts;
 		$label     = 1 === $count ? 'property found' : 'properties found';
+		$border    = $style_tokens['border'];
+		$text      = $style_tokens['text'];
+		$surface   = $style_tokens['surface'];
+		$muted     = $style_tokens['muted'];
 
 		ob_start();
 		?>
 
-		<form class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['background'] ); ?>; border: 1px solid #b9e6de; border-radius: 20px; padding: 18px; margin: 0 0 24px;">
+		<form class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['background'] ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; padding: 18px; margin: 0 0 24px;">
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; align-items: end;">
-				<?php echo $this->render_property_filter_select( 'purpose', 'Purpose', $filters['purpose'], $options['purpose'], [] ); ?>
-				<?php echo $this->render_property_filter_select( 'property_type', 'Property Type', $filters['property_type'], $options['property_type'], [] ); ?>
-				<?php echo $this->render_property_filter_select( 'district', 'District', $filters['district'], $options['district'], [] ); ?>
-				<?php echo $this->render_property_filter_select( 'bedrooms', 'Bedrooms', $filters['bedrooms'], $options['bedrooms'], [ '1' => '1+', '2' => '2+', '3' => '3+', '4' => '4+' ] ); ?>
+				<?php echo $this->render_property_filter_select( 'purpose', 'Purpose', $filters['purpose'], $options['purpose'], [], $style_tokens ); ?>
+				<?php echo $this->render_property_filter_select( 'property_type', 'Property Type', $filters['property_type'], $options['property_type'], [], $style_tokens ); ?>
+				<?php echo $this->render_property_filter_select( 'district', 'District', $filters['district'], $options['district'], [], $style_tokens ); ?>
+				<?php echo $this->render_property_filter_select( 'bedrooms', 'Bedrooms', $filters['bedrooms'], $options['bedrooms'], [ '1' => '1+', '2' => '2+', '3' => '3+', '4' => '4+' ], $style_tokens ); ?>
 
-				<label style="display: grid; gap: 7px; color: #213532; font-size: 13px; font-weight: 800;">
+				<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
 					<?php echo esc_html( 'Price min' ); ?>
-					<input type="number" min="0" step="1" name="price_min" value="<?php echo esc_attr( $filters['price_min'] ); ?>" placeholder="100000" style="width: 100%; border: 1px solid #9ddbd2; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: #fff;">
+					<input type="number" min="0" step="1" name="price_min" value="<?php echo esc_attr( $filters['price_min'] ); ?>" placeholder="100000" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>;">
 				</label>
 
-				<label style="display: grid; gap: 7px; color: #213532; font-size: 13px; font-weight: 800;">
+				<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
 					<?php echo esc_html( 'Price max' ); ?>
-					<input type="number" min="0" step="1" name="price_max" value="<?php echo esc_attr( $filters['price_max'] ); ?>" placeholder="300000" style="width: 100%; border: 1px solid #9ddbd2; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: #fff;">
+					<input type="number" min="0" step="1" name="price_max" value="<?php echo esc_attr( $filters['price_max'] ); ?>" placeholder="300000" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>;">
 				</label>
 
 				<div style="display: flex; gap: 10px; flex-wrap: wrap;">
-					<button type="submit" style="border: 0; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['primary'] ); ?>; color: #fff; min-height: 42px; padding: 0 18px; font-weight: 800; cursor: pointer;">
+					<button type="submit" style="border: 0; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 42px; padding: 0 18px; font-weight: 800; cursor: pointer;">
 						<?php echo esc_html( 'Search' ); ?>
 					</button>
-					<a href="<?php echo esc_url( $reset_url ); ?>" style="display: inline-flex; align-items: center; min-height: 42px; color: <?php echo esc_attr( $style_tokens['primary'] ); ?>; font-weight: 800; text-decoration: none;">
+					<a href="<?php echo esc_url( $reset_url ); ?>" style="display: inline-flex; align-items: center; min-height: 42px; color: <?php echo esc_attr( $style_tokens['link'] ); ?>; font-weight: 800; text-decoration: none;">
 						<?php echo esc_html( 'Reset' ); ?>
 					</a>
 				</div>
 			</div>
 		</form>
 
-		<div class="factory-property-results-count" style="margin: 0 0 20px; color: #52635f; font-size: 15px; font-weight: 700;">
+		<div class="factory-property-results-count" style="margin: 0 0 20px; color: <?php echo esc_attr( $muted ); ?>; font-size: 15px; font-weight: 700;">
 			<?php echo esc_html( "{$count} {$label}" ); ?>
 		</div>
 
@@ -1583,14 +1609,15 @@ class Factory_Render_Adapter {
 		string $label,
 		string $selected,
 		array $options,
-		array $labels
+		array $labels,
+		array $style_tokens
 	): string {
 		ob_start();
 		?>
 
-		<label style="display: grid; gap: 7px; color: #213532; font-size: 13px; font-weight: 800;">
+		<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $style_tokens['text'] ); ?>; font-size: 13px; font-weight: 800;">
 			<?php echo esc_html( $label ); ?>
-			<select name="<?php echo esc_attr( $name ); ?>" style="width: 100%; border: 1px solid #9ddbd2; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: #fff; color: #10201d;">
+			<select name="<?php echo esc_attr( $name ); ?>" style="width: 100%; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['text'] ); ?>;">
 				<option value=""><?php echo esc_html( 'Any' ); ?></option>
 				<?php foreach ( $options as $option ) : ?>
 					<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected, $option ); ?>>
@@ -1716,6 +1743,10 @@ class Factory_Render_Adapter {
 		$primary       = $style_tokens['primary'];
 		$accent        = $style_tokens['accent'];
 		$background    = $style_tokens['background'];
+		$surface       = $style_tokens['surface'];
+		$text          = $style_tokens['text'];
+		$muted         = $style_tokens['muted'];
+		$border        = $style_tokens['border'];
 		$permalink     = get_permalink( $post_id );
 		$title         = get_the_title( $post_id );
 		$price         = get_post_meta( $post_id, 'price', true );
@@ -1743,7 +1774,7 @@ class Factory_Render_Adapter {
 		ob_start();
 		?>
 
-		<article class="factory-property-card" style="background: #fff; border: 1px solid #d7eee9; border-radius: 20px; overflow: hidden; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.11);">
+		<article class="factory-property-card" style="background: <?php echo esc_attr( $surface ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; overflow: hidden; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.11);">
 			<a href="<?php echo esc_url( $permalink ); ?>" style="display: block; position: relative; min-height: 232px; background: <?php echo esc_attr( $background ); ?>; text-decoration: none;">
 				<?php if ( has_post_thumbnail( $post_id ) ) : ?>
 					<?php
@@ -1785,13 +1816,13 @@ class Factory_Render_Adapter {
 				<?php endif; ?>
 
 				<h2 style="font-size: 21px; line-height: 1.25; margin: 0 0 10px;">
-					<a href="<?php echo esc_url( $permalink ); ?>" style="color: #10201d; text-decoration: none;">
+					<a href="<?php echo esc_url( $permalink ); ?>" style="color: <?php echo esc_attr( $style_tokens['heading'] ); ?>; text-decoration: none;">
 						<?php echo esc_html( $title ); ?>
 					</a>
 				</h2>
 
 				<?php if ( '' !== $address ) : ?>
-					<div style="color: #52635f; font-size: 14px; line-height: 1.5; margin-bottom: 8px;">
+					<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 14px; line-height: 1.5; margin-bottom: 8px;">
 						<?php echo esc_html( $address ); ?>
 					</div>
 				<?php endif; ?>
@@ -1805,14 +1836,14 @@ class Factory_Render_Adapter {
 				<?php if ( ! empty( $stats ) ) : ?>
 					<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;">
 						<?php foreach ( $stats as $stat ) : ?>
-							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: #213532; padding: 7px 10px; font-size: 13px; font-weight: 700;">
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $text ); ?>; padding: 7px 10px; font-size: 13px; font-weight: 700;">
 								<?php echo esc_html( $stat ); ?>
 							</span>
 						<?php endforeach; ?>
 					</div>
 				<?php endif; ?>
 
-				<a href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; color: <?php echo esc_attr( $accent ); ?>; font-size: 14px; font-weight: 800; text-decoration: none;">
+				<a href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; color: <?php echo esc_attr( $style_tokens['link'] ?: $accent ); ?>; font-size: 14px; font-weight: 800; text-decoration: none;">
 					View property
 				</a>
 			</div>
@@ -1826,9 +1857,20 @@ class Factory_Render_Adapter {
 		$style = $blueprint['site']['style'] ?? [];
 
 		return [
-			'primary'    => $this->sanitize_color_token( $style['primary'] ?? '', '#0f766e' ),
-			'accent'     => $this->sanitize_color_token( $style['accent'] ?? '', '#14b8a6' ),
-			'background' => $this->sanitize_color_token( $style['background'] ?? '', '#ecfeff' ),
+			'tone'           => sanitize_key( $style['tone'] ?? 'premium' ),
+			'primary_preset' => sanitize_key( $style['primary_preset'] ?? 'turquoise' ),
+			'primary'        => $this->sanitize_color_token( $style['primary'] ?? '', '#0f766e' ),
+			'accent'         => $this->sanitize_color_token( $style['accent'] ?? '', '#14b8a6' ),
+			'background'     => $this->sanitize_color_token( $style['background'] ?? '', '#ecfeff' ),
+			'surface'        => $this->sanitize_color_token( $style['surface'] ?? '', '#ffffff' ),
+			'text'           => $this->sanitize_color_token( $style['text'] ?? '', '#10201d' ),
+			'muted'          => $this->sanitize_color_token( $style['muted'] ?? '', '#52635f' ),
+			'border'         => $this->sanitize_color_token( $style['border'] ?? '', '#d7eee9' ),
+			'button'         => $this->sanitize_color_token( $style['button'] ?? '', $style['accent'] ?? '#14b8a6' ),
+			'button_text'    => $this->sanitize_color_token( $style['button_text'] ?? '', '#ffffff' ),
+			'link'           => $this->sanitize_color_token( $style['link'] ?? '', $style['primary'] ?? '#0f766e' ),
+			'link_hover'     => $this->sanitize_color_token( $style['link_hover'] ?? '', '#0d9488' ),
+			'heading'        => $this->sanitize_color_token( $style['heading'] ?? '', '#10201d' ),
 		];
 	}
 
@@ -2033,8 +2075,12 @@ class Factory_Render_Adapter {
 		$primary      = $style_tokens['primary'];
 		$accent       = $style_tokens['accent'];
 		$background   = $style_tokens['background'];
+		$surface      = $style_tokens['surface'];
+		$text         = $style_tokens['text'];
+		$muted        = $style_tokens['muted'];
+		$border       = $style_tokens['border'];
 		$html         = '<style>body.front-page .entry-title, body.front-page .page-title, body.home .entry-title, body.home .page-title { display: none !important; }</style>';
-		$html        .= '<div class="factory-home-page" style="background: #fff; color: #10201d; margin: -40px 0 0;">';
+		$html        .= '<div class="factory-home-page" style="background: ' . esc_attr( $surface ) . '; color: ' . esc_attr( $text ) . '; margin: -40px 0 0;">';
 
 		foreach ( $sections as $section ) {
 			if ( ! is_array( $section ) ) {
@@ -2052,10 +2098,10 @@ class Factory_Render_Adapter {
 				$html .= '<section class="factory-home-hero" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $background ) . '; padding: 76px 0 54px;">';
 				$html .= '<div style="max-width: 1120px; margin: 0 auto; padding: 0 24px;">';
 				$html .= '<div style="max-width: 720px;">';
-				$html .= '<span style="display: inline-flex; border-radius: 999px; background: #fff; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 800; margin-bottom: 18px;">Real Estate Beta</span>';
-				$html .= '<h1 style="font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; margin: 0 0 18px; letter-spacing: 0;">' . esc_html( $title ) . '</h1>';
-				$html .= '<p style="font-size: clamp(18px, 2.4vw, 26px); line-height: 1.45; color: #31524d; margin: 0 0 28px;">' . esc_html( $subtitle ) . '</p>';
-				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $accent ) . '; color: #fff; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+				$html .= '<span style="display: inline-flex; border-radius: 999px; background: ' . esc_attr( $surface ) . '; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 800; margin-bottom: 18px;">Real Estate Beta</span>';
+				$html .= '<h1 style="font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; margin: 0 0 18px; letter-spacing: 0; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h1>';
+				$html .= '<p style="font-size: clamp(18px, 2.4vw, 26px); line-height: 1.45; color: ' . esc_attr( $muted ) . '; margin: 0 0 28px;">' . esc_html( $subtitle ) . '</p>';
+				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
 				$html .= '</div>';
 				$html .= '</div>';
 				$html .= '</section>';
@@ -2071,9 +2117,9 @@ class Factory_Render_Adapter {
 				$html .= '<header style="display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 22px;">';
 				$html .= '<div>';
 				$html .= '<span style="color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0;">Kyiv catalog</span>';
-				$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 6px 0 0;">' . esc_html( $title ) . '</h2>';
+				$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 6px 0 0; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h2>';
 				$html .= '</div>';
-				$html .= '<a href="' . esc_url( $this->resolve_frontend_url( '/properties/', '/properties/' ) ) . '" style="color: ' . esc_attr( $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
+				$html .= '<a href="' . esc_url( $this->resolve_frontend_url( '/properties/', '/properties/' ) ) . '" style="color: ' . esc_attr( $style_tokens['link'] ?: $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
 				$html .= '</header>';
 				$html .= sprintf(
 					'[factory_listing slug="%s" query="%s"]',
@@ -2091,10 +2137,10 @@ class Factory_Render_Adapter {
 				$cta_url   = $this->resolve_frontend_url( $section['cta_url'] ?? '', '/contact/' );
 
 				$html .= '<section style="max-width: 1120px; margin: 0 auto; padding: 44px 24px 84px;">';
-				$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 24px; padding: clamp(28px, 5vw, 54px); box-shadow: 0 18px 44px rgba(15, 118, 110, 0.11);">';
-				$html .= '<h2 style="font-size: clamp(30px, 4vw, 50px); line-height: 1.08; margin: 0 0 12px;">' . esc_html( $title ) . '</h2>';
-				$html .= '<p style="max-width: 620px; color: #52635f; font-size: 17px; line-height: 1.6; margin: 0 0 24px;">' . esc_html( $text ) . '</p>';
-				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $primary ) . '; color: #fff; padding: 13px 18px; font-size: 14px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+				$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 24px; padding: clamp(28px, 5vw, 54px); box-shadow: 0 18px 44px rgba(15, 118, 110, 0.11);">';
+				$html .= '<h2 style="font-size: clamp(30px, 4vw, 50px); line-height: 1.08; margin: 0 0 12px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h2>';
+				$html .= '<p style="max-width: 620px; color: ' . esc_attr( $muted ) . '; font-size: 17px; line-height: 1.6; margin: 0 0 24px;">' . esc_html( $text ) . '</p>';
+				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 13px 18px; font-size: 14px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
 				$html .= '</div>';
 				$html .= '</section>';
 			}
@@ -2180,6 +2226,9 @@ class Factory_Render_Adapter {
 		$primary      = $style_tokens['primary'];
 		$accent       = $style_tokens['accent'];
 		$background   = $style_tokens['background'];
+		$surface      = $style_tokens['surface'];
+		$muted        = $style_tokens['muted'];
+		$border       = $style_tokens['border'];
 		$title        = $contact['title'] ?? 'Contact Kyiv Turquoise Realty';
 		$text         = $contact['text'] ?? '';
 		$phone        = $contact['phone'] ?? '';
@@ -2187,16 +2236,16 @@ class Factory_Render_Adapter {
 		$cta_label    = $contact['cta_label'] ?? 'Browse properties';
 		$cta_url      = $this->resolve_frontend_url( $contact['cta_url'] ?? '', '/properties/' );
 
-		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: #10201d;">';
+		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: ' . esc_attr( $style_tokens['text'] ) . ';">';
 		$html .= '<div style="max-width: 920px; margin: 0 auto;">';
-		$html .= '<span style="display: inline-flex; border-radius: 999px; background: #fff; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 18px;">Kyiv agency</span>';
-		$html .= '<h1 style="font-size: clamp(30px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px;">' . esc_html( $title ) . '</h1>';
-		$html .= '<p style="max-width: 680px; color: #52635f; font-size: 19px; line-height: 1.6; margin: 0 0 34px;">' . esc_html( $text ) . '</p>';
+		$html .= '<span style="display: inline-flex; border-radius: 999px; background: ' . esc_attr( $surface ) . '; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 18px;">Kyiv agency</span>';
+		$html .= '<h1 style="font-size: clamp(30px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h1>';
+		$html .= '<p style="max-width: 680px; color: ' . esc_attr( $muted ) . '; font-size: 19px; line-height: 1.6; margin: 0 0 34px;">' . esc_html( $text ) . '</p>';
 		$html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 32px;">';
-		$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Phone</strong><span>' . esc_html( $phone ) . '</span></div>';
-		$html .= '<div style="background: #fff; border: 1px solid #d7eee9; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Email</strong><span>' . esc_html( $email ) . '</span></div>';
+		$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Phone</strong><span>' . esc_html( $phone ) . '</span></div>';
+		$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Email</strong><span>' . esc_html( $email ) . '</span></div>';
 		$html .= '</div>';
-		$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $accent ) . '; color: #fff; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+		$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ?: $accent ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
 		$html .= '[factory_request_viewing]';
 		$html .= '</div>';
 		$html .= '</section>';

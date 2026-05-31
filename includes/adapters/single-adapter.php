@@ -231,6 +231,10 @@ class Factory_Single_Adapter {
 		$primary       = $style_tokens['primary'];
 		$accent        = $style_tokens['accent'];
 		$background    = $style_tokens['background'];
+		$surface       = $style_tokens['surface'];
+		$text          = $style_tokens['text'];
+		$muted         = $style_tokens['muted'];
+		$border        = $style_tokens['border'];
 		$title         = get_the_title( $post_id );
 		$price         = get_post_meta( $post_id, 'price', true );
 		$address       = get_post_meta( $post_id, 'address', true );
@@ -316,12 +320,12 @@ class Factory_Single_Adapter {
 
 					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 28px; align-items: start;">
 						<div>
-							<h1 style="font-size: clamp(32px, 3.5vw, 48px); line-height: 1.08; margin: 0 0 16px; color: #10201d;">
+							<h1 style="font-size: clamp(32px, 3.5vw, 48px); line-height: 1.08; margin: 0 0 16px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
 								<?php echo esc_html( $title ); ?>
 							</h1>
 
 							<?php if ( '' !== $address ) : ?>
-								<div style="color: #52635f; font-size: 16px; line-height: 1.55; margin-bottom: 8px;">
+								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 16px; line-height: 1.55; margin-bottom: 8px;">
 									<?php echo esc_html( $address ); ?>
 								</div>
 							<?php endif; ?>
@@ -334,8 +338,8 @@ class Factory_Single_Adapter {
 						</div>
 
 						<?php if ( '' !== $price ) : ?>
-						<div style="border: 1px solid #d7eee9; border-radius: 18px; background: #fff; padding: 16px 18px; box-shadow: 0 12px 28px rgba(15, 118, 110, 0.08); max-width: 260px;">
-								<div style="color: #52635f; font-size: 13px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">
+						<div style="border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 18px; background: <?php echo esc_attr( $surface ); ?>; padding: 16px 18px; box-shadow: 0 12px 28px rgba(15, 118, 110, 0.08); max-width: 260px;">
+								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 13px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">
 									Price
 								</div>
 								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 26px; line-height: 1.1; font-weight: 900;">
@@ -349,7 +353,7 @@ class Factory_Single_Adapter {
 				<?php if ( ! empty( $stats ) ) : ?>
 					<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px;">
 						<?php foreach ( $stats as $stat ) : ?>
-							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: #213532; padding: 10px 14px; font-size: 14px; font-weight: 800;">
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $text ); ?>; padding: 10px 14px; font-size: 14px; font-weight: 800;">
 								<?php echo esc_html( $stat ); ?>
 							</span>
 						<?php endforeach; ?>
@@ -357,26 +361,26 @@ class Factory_Single_Adapter {
 				<?php endif; ?>
 
 				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 32px; align-items: start;">
-					<section style="border-top: 1px solid #dfecea; padding-top: 28px;">
-						<h2 style="font-size: 24px; line-height: 1.2; margin: 0 0 14px; color: #10201d;">
+					<section style="border-top: 1px solid <?php echo esc_attr( $border ); ?>; padding-top: 28px;">
+						<h2 style="font-size: 24px; line-height: 1.2; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
 							Property description
 						</h2>
 
-						<div style="color: #263633; font-size: 18px; line-height: 1.75;">
+						<div style="color: <?php echo esc_attr( $text ); ?>; font-size: 18px; line-height: 1.75;">
 							<?php echo wp_kses_post( $content ); ?>
 						</div>
 						<?php if ( ! empty( $details ) ) : ?>
 					<section style="margin-top: 30px;">
-						<h2 style="font-size: 22px; line-height: 1.2; margin: 0 0 14px; color: #10201d;">
+						<h2 style="font-size: 22px; line-height: 1.2; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
 							Property details
 						</h2>
 						<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
 							<?php foreach ( $details as $detail ) : ?>
-								<div style="border: 1px solid #d7eee9; border-radius: 16px; background: #fff; padding: 14px 16px;">
-									<div style="color: #52635f; font-size: 12px; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">
+								<div style="border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 16px; background: <?php echo esc_attr( $surface ); ?>; padding: 14px 16px;">
+									<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 12px; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">
 										<?php echo esc_html( $detail[0] ); ?>
 									</div>
-									<div style="color: #10201d; font-size: 16px; font-weight: 800; line-height: 1.3;">
+									<div style="color: <?php echo esc_attr( $text ); ?>; font-size: 16px; font-weight: 800; line-height: 1.3;">
 										<?php echo esc_html( $detail[1] ); ?>
 									</div>
 								</div>
@@ -386,12 +390,12 @@ class Factory_Single_Adapter {
 				<?php endif; ?>
 
 				<?php if ( '' !== $address || '' !== $district ) : ?>
-					<section style="margin-top: 30px; border: 1px solid #d7eee9; border-radius: 18px; background: <?php echo esc_attr( $background ); ?>; padding: 18px;">
-						<h2 style="font-size: 20px; line-height: 1.2; margin: 0 0 10px; color: #10201d;">
+					<section style="margin-top: 30px; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 18px; background: <?php echo esc_attr( $background ); ?>; padding: 18px;">
+						<h2 style="font-size: 20px; line-height: 1.2; margin: 0 0 10px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
 							Location
 						</h2>
 						<?php if ( '' !== $address ) : ?>
-							<div style="color: #263633; font-size: 15px; line-height: 1.55; margin-bottom: 6px;">
+							<div style="color: <?php echo esc_attr( $text ); ?>; font-size: 15px; line-height: 1.55; margin-bottom: 6px;">
 								<?php echo esc_html( $address ); ?>
 							</div>
 						<?php endif; ?>
@@ -404,16 +408,16 @@ class Factory_Single_Adapter {
 				<?php endif; ?>
 					</section>
 
-					<aside id="factory-property-contact" style="border: 1px solid #d7eee9; border-radius: 20px; background: #fff; padding: 24px; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.1);">
-						<h2 style="font-size: 22px; line-height: 1.25; margin: 0 0 10px; color: #10201d;">
+					<aside id="factory-property-contact" style="border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; background: <?php echo esc_attr( $surface ); ?>; padding: 24px; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.1);">
+						<h2 style="font-size: 22px; line-height: 1.25; margin: 0 0 10px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
 							Interested in this property?
 						</h2>
 
-						<p style="color: #52635f; font-size: 15px; line-height: 1.6; margin: 0 0 18px;">
+						<p style="color: <?php echo esc_attr( $muted ); ?>; font-size: 15px; line-height: 1.6; margin: 0 0 18px;">
 							Contact the agency to schedule a viewing or request more details.
 						</p>
 
-						<a href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $accent ); ?>; color: #fff; padding: 11px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+						<a href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; padding: 11px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
 							Contact agency
 						</a>
 					</aside>
@@ -429,9 +433,20 @@ class Factory_Single_Adapter {
 		$style = $blueprint['site']['style'] ?? [];
 
 		return [
-			'primary'    => $this->sanitize_color_token( $style['primary'] ?? '', '#0f766e' ),
-			'accent'     => $this->sanitize_color_token( $style['accent'] ?? '', '#14b8a6' ),
-			'background' => $this->sanitize_color_token( $style['background'] ?? '', '#ecfeff' ),
+			'tone'           => sanitize_key( $style['tone'] ?? 'premium' ),
+			'primary_preset' => sanitize_key( $style['primary_preset'] ?? 'turquoise' ),
+			'primary'        => $this->sanitize_color_token( $style['primary'] ?? '', '#0f766e' ),
+			'accent'         => $this->sanitize_color_token( $style['accent'] ?? '', '#14b8a6' ),
+			'background'     => $this->sanitize_color_token( $style['background'] ?? '', '#ecfeff' ),
+			'surface'        => $this->sanitize_color_token( $style['surface'] ?? '', '#ffffff' ),
+			'text'           => $this->sanitize_color_token( $style['text'] ?? '', '#10201d' ),
+			'muted'          => $this->sanitize_color_token( $style['muted'] ?? '', '#52635f' ),
+			'border'         => $this->sanitize_color_token( $style['border'] ?? '', '#d7eee9' ),
+			'button'         => $this->sanitize_color_token( $style['button'] ?? '', $style['accent'] ?? '#14b8a6' ),
+			'button_text'    => $this->sanitize_color_token( $style['button_text'] ?? '', '#ffffff' ),
+			'link'           => $this->sanitize_color_token( $style['link'] ?? '', $style['primary'] ?? '#0f766e' ),
+			'link_hover'     => $this->sanitize_color_token( $style['link_hover'] ?? '', '#0d9488' ),
+			'heading'        => $this->sanitize_color_token( $style['heading'] ?? '', '#10201d' ),
 		];
 	}
 
