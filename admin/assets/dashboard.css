@@ -301,6 +301,27 @@
 	padding: 12px;
 }
 
+.factory-requirement-card-ok {
+	border-color: #68de7c;
+}
+
+.factory-requirement-card-warning {
+	border-color: #f0c33c;
+}
+
+.factory-requirement-card-error {
+	border-color: #e26f75;
+}
+
+.factory-requirement-meta {
+	color: #52635f;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	margin-bottom: 4px;
+	text-transform: uppercase;
+}
+
 .factory-wizard-requirements strong {
 	display: block;
 	margin-bottom: 4px;
@@ -311,6 +332,26 @@
 	font-size: 13px;
 	line-height: 1.45;
 	margin: 0;
+}
+
+.factory-requirements-summary {
+	border: 1px solid #d7eee9;
+	border-radius: 8px;
+	font-weight: 800;
+	margin: 14px 0;
+	padding: 12px;
+}
+
+.factory-requirements-summary-ready {
+	background: #edfaef;
+	border-color: #68de7c;
+	color: #008a20;
+}
+
+.factory-requirements-summary-attention {
+	background: #fff8e5;
+	border-color: #f0c33c;
+	color: #996800;
 }
 
 .factory-wizard-fixed-choice,

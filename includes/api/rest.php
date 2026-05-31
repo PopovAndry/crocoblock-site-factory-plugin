@@ -54,6 +54,10 @@ function factory_register_rest_routes(): void {
 			'methods'  => [ 'GET', 'POST' ],
 			'callback' => 'factory_rest_beta_real_estate_plan',
 		],
+		'/beta/real-estate/requirements' => [
+			'methods'  => 'GET',
+			'callback' => 'factory_rest_beta_real_estate_requirements',
+		],
 		'/beta/real-estate/apply' => [
 			'methods'  => 'POST',
 			'callback' => 'factory_rest_beta_real_estate_apply',
@@ -217,6 +221,14 @@ function factory_register_rest_routes(): void {
         } catch ( Throwable $e ) {
             return factory_rest_beta_error_response( $e->getMessage() );
         }
+    }
+
+    function factory_rest_beta_real_estate_requirements(): WP_REST_Response {
+        $dependencies = factory_rest_get_real_estate_dependency_status();
+
+        return new WP_REST_Response(
+            factory_rest_build_real_estate_requirements_response( $dependencies )
+        );
     }
 
     function factory_rest_beta_real_estate_apply( WP_REST_Request $request ): WP_REST_Response {
@@ -663,6 +675,8 @@ function factory_register_rest_routes(): void {
         $jetengine_active     = false;
         $jfb_installed        = false;
         $jfb_active           = false;
+        $jsf_installed        = false;
+        $jsf_active           = false;
         $kava_theme           = wp_get_theme( 'kava' );
         $kava_installed       = $kava_theme && $kava_theme->exists();
         $current_theme        = wp_get_theme();
@@ -684,6 +698,14 @@ function factory_register_rest_routes(): void {
                     $jfb_active = true;
                 }
             }
+
+            if ( 'jet-smart-filters/jet-smart-filters.php' === $file || str_starts_with( $file, 'jet-smart-filters/' ) ) {
+                $jsf_installed = true;
+
+                if ( function_exists( 'is_plugin_active' ) && is_plugin_active( $file ) ) {
+                    $jsf_active = true;
+                }
+            }
         }
 
         $jfb_available = $jfb_active
@@ -692,6 +714,14 @@ function factory_register_rest_routes(): void {
 
         if ( $jfb_available && function_exists( 'post_type_exists' ) ) {
             $jfb_available = post_type_exists( 'jet-form-builder' );
+        }
+
+        $jsf_available = $jsf_active
+            || function_exists( 'jet_smart_filters' )
+            || '' !== (string) get_option( 'jet_smart_filters_version', '' );
+
+        if ( $jsf_available && function_exists( 'post_type_exists' ) ) {
+            $jsf_available = post_type_exists( 'jet-smart-filters' );
         }
 
         return [
@@ -714,6 +744,113 @@ function factory_register_rest_routes(): void {
                 'status'    => $jfb_available ? 'ok' : 'warning',
                 'fallback'  => ! $jfb_available,
             ],
+            'jetsmartfilters' => [
+                'installed' => $jsf_installed,
+                'active'    => $jsf_active,
+                'available' => $jsf_available,
+                'optional'  => true,
+                'status'    => $jsf_available ? 'ok' : 'warning',
+                'fallback'  => ! $jsf_available,
+            ],
+        ];
+    }
+
+    function factory_rest_build_real_estate_requirements_response( array $dependencies ): array {
+        $items = [
+            factory_rest_requirement_item(
+                'kava',
+                'Kava theme',
+                true,
+                $dependencies['kava'] ?? [],
+                'Kava theme is active.',
+                'Kava theme must be active before generation.'
+            ),
+            factory_rest_requirement_item(
+                'jet_engine',
+                'JetEngine',
+                true,
+                $dependencies['jet_engine'] ?? [],
+                'JetEngine is active.',
+                'JetEngine must be active before generation.'
+            ),
+            factory_rest_requirement_item(
+                'jetsmartfilters',
+                'JetSmartFilters',
+                false,
+                $dependencies['jetsmartfilters'] ?? [],
+                'Native filters proof is available.',
+                'Stable /properties/ catalog still works. Native filters proof requires JetSmartFilters.'
+            ),
+            factory_rest_requirement_item(
+                'jetformbuilder',
+                'JetFormBuilder',
+                false,
+                $dependencies['jetformbuilder'] ?? [],
+                'Request Viewing form enhancements are available.',
+                'Request Viewing form enhancements require JetFormBuilder.'
+            ),
+        ];
+        $ready = ! empty( $dependencies['ready'] );
+        $optional_missing = false;
+
+        foreach ( $items as $item ) {
+            if ( empty( $item['required'] ) && 'optional_missing' === $item['status'] ) {
+                $optional_missing = true;
+                break;
+            }
+        }
+
+        $summary = 'Ready to generate.';
+
+        if ( ! $ready ) {
+            $summary = 'Required setup needed before generation.';
+        } elseif ( $optional_missing ) {
+            $summary = 'Ready to generate. Optional enhancements unavailable.';
+        }
+
+        return [
+            'status'  => 'ok',
+            'ready'   => $ready,
+            'summary' => $summary,
+            'items'   => $items,
+        ];
+    }
+
+    function factory_rest_requirement_item(
+        string $key,
+        string $label,
+        bool $required,
+        array $dependency,
+        string $active_message,
+        string $missing_message
+    ): array {
+        $installed = ! empty( $dependency['installed'] );
+        $active = ! empty( $dependency['active'] ) || ! empty( $dependency['available'] );
+        $status = 'unknown';
+        $message = "{$label} status is unknown.";
+
+        if ( $active ) {
+            $status = 'active';
+            $message = $active_message;
+        } elseif ( $installed ) {
+            $status = 'inactive';
+            $message = "{$label} is installed but inactive.";
+        } elseif ( $required ) {
+            $status = 'missing';
+            $message = $missing_message;
+        } else {
+            $status = 'optional_missing';
+            $message = $missing_message;
+        }
+
+        return [
+            'key'       => $key,
+            'label'     => $label,
+            'required'  => $required,
+            'installed' => $installed,
+            'active'    => $active,
+            'status'    => $status,
+            'message'   => $message,
         ];
     }
 

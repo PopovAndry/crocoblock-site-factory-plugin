@@ -30,6 +30,8 @@
 		latest: null,
 		runs: [],
 		adapters: [],
+		requirements: null,
+		requirementsError: '',
 		selectedRun: null,
 		selectedFile: '',
 		errors: [],
@@ -224,6 +226,10 @@
 
 	function isPreviewCurrent() {
 		return Boolean( state.previewPayloadKey ) && state.previewPayloadKey === currentPayloadKeyFromState() && ! state.previewStale;
+	}
+
+	function isRequirementsReady() {
+		return Boolean( state.requirements && state.requirements.ready );
 	}
 
 	function updatePreviewFreshness() {
@@ -512,70 +518,86 @@
 		].join( '' );
 	}
 
-	function productPlanSection( label ) {
-		const productPlan = state.betaProductPlan || {};
-		const sections = Array.isArray( productPlan.sections ) ? productPlan.sections : [];
-
-		return sections.find( function ( section ) {
-			return String( section.label || '' ).toLowerCase() === String( label || '' ).toLowerCase();
-		} ) || null;
-	}
-
-	function dependencyStatusFromPlan( needle, optionalFallbackOk ) {
-		const section = productPlanSection( 'Dependencies' );
-		const items = section && Array.isArray( section.items ) ? section.items : [];
-		const text = items.join( ' ' ).toLowerCase();
-		const key = String( needle || '' ).toLowerCase();
-
-		if ( ! text ) {
-			return 'unknown';
-		}
-
-		if ( text.includes( key + ' active' ) || text.includes( key + ' available' ) ) {
+	function requirementBadgeClass( status ) {
+		if ( status === 'active' ) {
 			return 'ok';
 		}
 
-		if ( optionalFallbackOk && text.includes( key ) && text.includes( 'fallback' ) ) {
-			return 'ok';
-		}
-
-		if ( text.includes( key + ' missing' ) ) {
-			return optionalFallbackOk ? 'ok' : 'error';
-		}
-
-		if ( text.includes( key + ' installed but inactive' ) ) {
+		if ( status === 'inactive' ) {
 			return 'warning';
+		}
+
+		if ( status === 'missing' ) {
+			return 'error';
 		}
 
 		return 'unknown';
 	}
 
-	function renderDependencyRows() {
-		const rows = [
+	function requirementStatusLabel( status ) {
+		const labels = {
+			active: 'Active',
+			missing: 'Missing',
+			inactive: 'Inactive',
+			optional_missing: 'Optional missing',
+			unknown: 'Unknown',
+		};
+
+		return labels[ status ] || 'Unknown';
+	}
+
+	function requirementFallbackItems() {
+		return [
 			{
+				key: 'kava',
 				label: 'Kava theme',
-				status: dependencyStatusFromPlan( 'Kava theme', false ),
-				note: 'Required for the current Real Estate demo styling.',
-			},
-			{
-				label: 'JetEngine',
-				status: dependencyStatusFromPlan( 'JetEngine', false ),
-				note: 'Required for property CPT, fields, listings, and Query Builder.',
-			},
-			{
-				label: 'JetSmartFilters',
+				required: true,
 				status: 'unknown',
-				note: 'Optional. Enables the experimental native filters proof; /properties/ stays stable without it.',
+				message: 'Kava theme status is unknown.',
 			},
 			{
+				key: 'jet_engine',
+				label: 'JetEngine',
+				required: true,
+				status: 'unknown',
+				message: 'JetEngine status is unknown.',
+			},
+			{
+				key: 'jetsmartfilters',
+				label: 'JetSmartFilters',
+				required: false,
+				status: 'unknown',
+				message: 'Stable /properties/ catalog still works. Native filters proof requires JetSmartFilters.',
+			},
+			{
+				key: 'jetformbuilder',
 				label: 'JetFormBuilder',
-				status: dependencyStatusFromPlan( 'JetFormBuilder', true ),
-				note: 'Optional. Request Viewing fallback is valid when unavailable.',
+				required: false,
+				status: 'unknown',
+				message: 'Request Viewing form enhancements require JetFormBuilder.',
 			},
 		];
+	}
 
-		return '<div class="factory-wizard-requirements">' + rows.map( function ( row ) {
-			return '<article><div><strong>' + escapeHtml( row.label ) + '</strong><p>' + escapeHtml( row.note ) + '</p></div>' + badge( row.status ) + '</article>';
+	function renderDependencyRows() {
+		const items = state.requirements && Array.isArray( state.requirements.items )
+			? state.requirements.items
+			: requirementFallbackItems();
+
+		return '<div class="factory-wizard-requirements">' + items.map( function ( item ) {
+			const status = item.status || 'unknown';
+			const badgeClass = requirementBadgeClass( status );
+
+			return [
+				'<article class="factory-requirement-card factory-requirement-card-' + escapeHtml( badgeClass ) + '">',
+					'<div>',
+						'<div class="factory-requirement-meta">' + ( item.required ? 'Required' : 'Optional' ) + '</div>',
+						'<strong>' + escapeHtml( item.label || item.key || 'Requirement' ) + '</strong>',
+						'<p>' + escapeHtml( item.message || 'Status unknown.' ) + '</p>',
+					'</div>',
+					'<span class="factory-badge factory-badge-' + escapeHtml( badgeClass ) + '">' + escapeHtml( requirementStatusLabel( status ) ) + '</span>',
+				'</article>',
+			].join( '' );
 		} ).join( '' ) + '</div>';
 	}
 
@@ -668,12 +690,20 @@
 		const isBusy = Boolean( state.betaAction );
 
 		if ( step === 0 ) {
+			const summary = state.requirements
+				? state.requirements.summary || 'Requirements checked.'
+				: ( state.requirementsError ? 'Unable to verify requirements.' : 'Checking requirements...' );
+
 			return [
 				'<section class="factory-wizard-step-panel">',
 					'<h3>Requirements</h3>',
 					'<p>Kava and JetEngine are required for this beta. JetSmartFilters and JetFormBuilder are optional; the generated site keeps working through safe fallbacks.</p>',
+					'<div class="factory-requirements-summary ' + ( isRequirementsReady() ? 'factory-requirements-summary-ready' : 'factory-requirements-summary-attention' ) + '">',
+						escapeHtml( summary ),
+					'</div>',
 					renderDependencyRows(),
-					! state.betaProductPlan ? '<p class="factory-empty">Dependency details refresh after Preview plan runs.</p>' : '',
+					state.requirementsError ? '<p class="factory-empty">Requirements check failed: ' + escapeHtml( state.requirementsError ) + '</p>' : '',
+					'<p class="factory-empty">No install or activation actions are available in this beta. Install required dependencies in WordPress, then refresh this dashboard.</p>',
 				'</section>',
 			].join( '' );
 		}
@@ -742,7 +772,7 @@
 				'<div class="factory-wizard-step-heading">',
 					'<div><h3>Generate / Proof</h3><p>Create the deterministic Real Estate demo, refresh validation proof, and open the generated frontend.</p></div>',
 					'<div class="factory-demo-actions">',
-						'<button type="button" class="button button-primary" data-factory-beta-action="apply"' + ( isBusy || ! isPreviewCurrent() ? ' disabled' : '' ) + '>',
+						'<button type="button" class="button button-primary" data-factory-beta-action="apply"' + ( isBusy || ! isPreviewCurrent() || ! isRequirementsReady() ? ' disabled' : '' ) + '>',
 							state.betaAction === 'apply' ? 'Generating...' : 'Generate Real Estate Demo',
 						'</button>',
 						'<button type="button" class="button" data-factory-beta-action="refresh"' + ( isBusy ? ' disabled' : '' ) + '>',
@@ -752,6 +782,7 @@
 				'</div>',
 				renderBetaMessage(),
 				renderGenerationProgress(),
+				! isRequirementsReady() ? '<div class="factory-wizard-notice factory-wizard-notice-warning">Required setup needed before generation.</div>' : '',
 				renderWizardNotice(),
 				'<div class="factory-demo-statuses factory-demo-statuses-inline">',
 					renderDemoStatus( 'Site generated', siteGenerated ),
@@ -1177,6 +1208,15 @@
 			return;
 		}
 
+		if ( ! isRequirementsReady() ) {
+			state.betaMessage = {
+				status: 'warning',
+				message: 'Required setup needed before generation.',
+			};
+			render();
+			return;
+		}
+
 		state.betaAction = 'apply';
 		state.betaMessage = null;
 		render();
@@ -1242,11 +1282,13 @@
 			request( config.endpoints?.runs || '/runs?limit=20' ),
 			request( config.endpoints?.latest || '/run/latest' ),
 			request( config.endpoints?.adapters || '/adapters' ),
+			request( config.endpoints?.realEstateRequirements || '/beta/real-estate/requirements' ),
 		] ).then( function ( results ) {
-			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters' ];
+			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements' ];
 			const failures = [];
 
 			state.noRunsYet = false;
+			state.requirementsError = '';
 
 			results.forEach( function ( result, index ) {
 				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
@@ -1290,6 +1332,13 @@
 			if ( results[3].status === 'fulfilled' ) {
 				state.adapters = Array.isArray( results[3].value.adapters ) ? results[3].value.adapters : [];
 			}
+
+			if ( results[4].status === 'fulfilled' ) {
+				state.requirements = results[4].value;
+			} else {
+				state.requirements = null;
+				state.requirementsError = results[4].reason ? results[4].reason.message : 'Unable to verify requirements.';
+			}
 		} );
 	}
 
@@ -1301,11 +1350,13 @@
 			request( config.endpoints?.runs || '/runs?limit=20' ),
 			request( config.endpoints?.latest || '/run/latest' ),
 			request( config.endpoints?.adapters || '/adapters' ),
+			request( config.endpoints?.realEstateRequirements || '/beta/real-estate/requirements' ),
 		] ).then( function ( results ) {
-			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters' ];
+			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements' ];
 
 			state.errors = [];
 			state.noRunsYet = false;
+			state.requirementsError = '';
 
 			results.forEach( function ( result, index ) {
 				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
@@ -1342,6 +1393,13 @@
 
 			if ( results[3].status === 'fulfilled' ) {
 				state.adapters = Array.isArray( results[3].value.adapters ) ? results[3].value.adapters : [];
+			}
+
+			if ( results[4].status === 'fulfilled' ) {
+				state.requirements = results[4].value;
+			} else {
+				state.requirements = null;
+				state.requirementsError = results[4].reason ? results[4].reason.message : 'Unable to verify requirements.';
 			}
 
 			render();
