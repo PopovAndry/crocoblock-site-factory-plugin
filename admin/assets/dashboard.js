@@ -589,7 +589,7 @@
 					'<h3>Style & colors</h3>',
 					'<span>Design tokens</span>',
 				'</div>',
-				'<p>Choose deterministic Factory tokens for generated components. Kava Customizer colors and Elementor Global Colors are not changed in this beta.</p>',
+				'<p>Choose deterministic Factory tokens for generated components. Site-wide theme settings are not changed in this beta.</p>',
 				'<div class="factory-style-control">',
 					'<h4>Style tone</h4>',
 					'<div class="factory-style-option-grid">',
@@ -798,7 +798,7 @@
 				'<p>',
 					compact
 						? 'Site Factory updates Factory-managed generated content only. Developer proof remains available in Advanced.'
-						: 'Site Factory updates Factory-managed generated content only. Existing unrelated pages, posts, users, uploads, theme settings, Elementor global colors, external APIs, and AI image generation are not changed.',
+						: 'Site Factory updates Factory-managed generated content only. Existing unrelated pages, posts, users, uploads, theme settings, external APIs, and AI image generation are not changed.',
 				'</p>',
 			'</div>',
 		].join( '' );
@@ -858,7 +858,7 @@
 						productPlanItems( 'Guardrails', [
 							'Only Factory-managed generated content changes',
 							'Existing unrelated pages, posts, users, and uploads are not changed',
-							'No Elementor global colors, AI images, external image APIs, or schema topology changes',
+							'No site-wide theme settings, AI images, external image APIs, or schema topology changes',
 						] ),
 						'safety'
 					),
@@ -1193,7 +1193,7 @@
 				'<section>',
 					'<h4>Will not change</h4>',
 					'<ul>',
-						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, Kava Customizer colors, Elementor Global Colors, and adapter order</li>',
+						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, site-wide theme settings, and adapter order</li>',
 						'<li>Property count, property titles, content, districts, terms, images, and native proof page behavior</li>',
 						'<li>Image uploads, Media Library picker, ZIP import, AI generation, and external image APIs</li>',
 						'<li>/properties/, /properties-native/, and /contact/ routing behavior</li>',
