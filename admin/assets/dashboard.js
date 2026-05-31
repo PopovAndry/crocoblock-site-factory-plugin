@@ -707,6 +707,247 @@
 		].join( '' );
 	}
 
+	function productPlanSections() {
+		const productPlan = state.betaProductPlan || {};
+
+		return Array.isArray( productPlan.sections ) ? productPlan.sections : [];
+	}
+
+	function productPlanSection( labels ) {
+		const wanted = ( Array.isArray( labels ) ? labels : [ labels ] ).map( function ( label ) {
+			return String( label || '' ).toLowerCase();
+		} );
+
+		return productPlanSections().find( function ( section ) {
+			const label = String( section.label || '' ).toLowerCase();
+
+			return wanted.includes( label );
+		} ) || null;
+	}
+
+	function productPlanItems( labels, fallback ) {
+		const section = productPlanSection( labels );
+		const items = section && Array.isArray( section.items ) ? section.items : [];
+
+		return items.length ? items : fallback;
+	}
+
+	function renderHumanList( items ) {
+		const safeItems = Array.isArray( items ) ? items.filter( Boolean ) : [];
+
+		if ( ! safeItems.length ) {
+			return '<p class="factory-empty">No summary available yet.</p>';
+		}
+
+		return '<ul>' + safeItems.map( function ( item ) {
+			return '<li>' + escapeHtml( item ) + '</li>';
+		} ).join( '' ) + '</ul>';
+	}
+
+	function renderHumanReportCard( title, items, modifier ) {
+		const classes = [ 'factory-human-report-card', modifier ? 'factory-human-report-card-' + modifier : '' ].filter( Boolean ).join( ' ' );
+
+		return [
+			'<article class="' + escapeHtml( classes ) + '">',
+				'<h4>' + escapeHtml( title ) + '</h4>',
+				renderHumanList( items ),
+			'</article>',
+		].join( '' );
+	}
+
+	function requirementsSummaryText() {
+		if ( state.requirements && state.requirements.summary ) {
+			return state.requirements.summary;
+		}
+
+		if ( isRequirementsReady() ) {
+			return 'Ready to generate.';
+		}
+
+		if ( state.requirementsError ) {
+			return 'Unable to verify requirements.';
+		}
+
+		return 'Requirements are being checked.';
+	}
+
+	function currentStyleSummaryText() {
+		const context = state.styleContext || defaultStyleContext;
+
+		return 'Style tone: ' + ( context.tone || defaultStyleContext.tone ) + ' / Primary preset: ' + ( context.primary_preset || defaultStyleContext.primary_preset );
+	}
+
+	function currentImageSummaryText() {
+		const context = state.imageContext || defaultImageContext;
+
+		return 'Image source: Included demo image pools / Mode: ' + ( context.mode || defaultImageContext.mode );
+	}
+
+	function safeVariableSummaryItems() {
+		return Object.keys( defaultPresetVariables ).map( function ( key ) {
+			const value = state.presetVariables[ key ] || defaultPresetVariables[ key ] || '';
+
+			return presetVariableLabel( key ) + ': ' + value;
+		} );
+	}
+
+	function renderSafetyNotice( compact ) {
+		return [
+			'<div class="factory-safety-notice">',
+				'<strong>Safety mode</strong>',
+				'<p>',
+					compact
+						? 'Site Factory updates Factory-managed generated content only. Developer proof remains available in Advanced.'
+						: 'Site Factory updates Factory-managed generated content only. Existing unrelated pages, posts, users, uploads, theme settings, Elementor global colors, external APIs, and AI image generation are not changed.',
+				'</p>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderHumanPreviewReport() {
+		if ( ! state.betaProductPlan && ! state.betaPlan ) {
+			return [
+				'<div class="factory-human-report">',
+					'<section class="factory-human-report-hero">',
+						'<span>Review before generation</span>',
+						'<h3>Preview this setup to create a human-readable plan.</h3>',
+						'<p>The prepared Real Estate preset will be shown with your prompt context, safe copy variables, style tokens, image source, requirements, and guardrails.</p>',
+					'</section>',
+					renderSafetyNotice( false ),
+				'</div>',
+			].join( '' );
+		}
+
+		return [
+			'<div class="factory-human-report">',
+				'<section class="factory-human-report-hero">',
+					'<span>Review before generation</span>',
+					'<h3>' + escapeHtml( state.betaProductPlan?.title || 'Real Estate Demo Plan' ) + '</h3>',
+					'<p>' + escapeHtml( state.betaProductPlan?.summary || 'Prepared Real Estate preset with prompt context and safe beta variables.' ) + '</p>',
+				'</section>',
+				'<div class="factory-human-report-grid">',
+					renderHumanReportCard(
+						'Setup summary',
+						[
+							'Website type: Real Estate demo',
+							'Mode: Prepared Real Estate preset',
+							'Prompt captured for the run manifest; free-prose AI parsing is not enabled',
+							'Requirements: ' + requirementsSummaryText(),
+						],
+						'summary'
+					),
+					renderHumanReportCard(
+						'What will be generated',
+						[].concat(
+							productPlanItems( 'Site structure', [ 'Home page', 'Properties catalog', 'Contact page', 'Navigation menu' ] ),
+							productPlanItems( 'Content', [ 'Real Estate property content' ] ),
+							productPlanItems( 'Frontend features', [ 'Catalog cards', 'GET filters', 'Single property pages', 'Request Viewing flow' ] )
+						),
+						'generated'
+					),
+					renderHumanReportCard(
+						'Your inputs',
+						[].concat(
+							safeVariableSummaryItems(),
+							[ currentStyleSummaryText(), currentImageSummaryText() ]
+						),
+						'inputs'
+					),
+					renderHumanReportCard(
+						'Safety guardrails',
+						productPlanItems( 'Guardrails', [
+							'Only Factory-managed generated content changes',
+							'Existing unrelated pages, posts, users, and uploads are not changed',
+							'No Elementor global colors, AI images, external image APIs, or schema topology changes',
+						] ),
+						'safety'
+					),
+				'</div>',
+				renderSafetyNotice( false ),
+			'</div>',
+		].join( '' );
+	}
+
+	function renderFrontendLinks() {
+		return [
+			'<div class="factory-human-link-groups">',
+				'<div>',
+					'<h4>Primary pages</h4>',
+					'<div class="factory-demo-links">',
+						'<a href="' + escapeHtml( homeUrl( '/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Home</a>',
+						'<a href="' + escapeHtml( homeUrl( '/properties/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Properties</a>',
+						'<a href="' + escapeHtml( homeUrl( '/contact/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Contact</a>',
+					'</div>',
+				'</div>',
+				'<div>',
+					'<h4>Proof links</h4>',
+					'<div class="factory-demo-links factory-demo-links-secondary">',
+						'<a class="factory-demo-link-experimental" href="' + escapeHtml( homeUrl( '/properties-native/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Native Filters Proof</a>',
+						'<a href="' + escapeHtml( homeUrl( '/property/turquoise-view-apartment-in-pechersk/' ) ) + '" target="_blank" rel="noopener noreferrer">Sample Apartment</a>',
+						'<a href="' + escapeHtml( homeUrl( '/property/solomianskyi-business-office/' ) ) + '" target="_blank" rel="noopener noreferrer">Sample Commercial</a>',
+					'</div>',
+				'</div>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderHumanProofReport( run, validationOk, doctorOk, siteGenerated ) {
+		const statusText = validationOk && doctorOk ? 'Validation passed' : 'Review validation status';
+		const isBusy = Boolean( state.betaAction );
+
+		if ( ! siteGenerated ) {
+			return [
+				'<div class="factory-human-report">',
+					'<section class="factory-human-report-hero factory-human-report-hero-pending">',
+						'<span>Proof pending</span>',
+						'<h3>No generated site proof yet.</h3>',
+						'<p>Generate the Real Estate demo to create pages, content, validation proof, and frontend links.</p>',
+					'</section>',
+					renderSafetyNotice( true ),
+				'</div>',
+			].join( '' );
+		}
+
+		return [
+			'<div class="factory-human-report">',
+				'<section class="factory-human-report-hero factory-human-report-hero-ready">',
+					'<span>Your site is ready</span>',
+					'<h3>Your Real Estate demo is ready.</h3>',
+					'<p>' + escapeHtml( statusText ) + '. Latest generated proof: ' + escapeHtml( run.timestamp || run.file || '-' ) + '</p>',
+				'</section>',
+				'<div class="factory-human-proof-grid">',
+					renderHumanReportCard(
+						'Generated site summary',
+						[
+							'Home page ready',
+							'Properties catalog ready',
+							'Contact page ready',
+							'Navigation menu ready',
+							'Stable catalog filters and single property pages ready',
+							'Request Viewing flow ready',
+						],
+						'generated'
+					),
+					renderHumanReportCard(
+						'Visual setup',
+						[
+							styleContextSummary( run ),
+							imageContextSummary( run ),
+						],
+						'inputs'
+					),
+				'</div>',
+				renderFrontendLinks(),
+				renderSafetyNotice( true ),
+				'<div class="factory-human-secondary-actions">',
+					'<button type="button" class="button" data-factory-beta-action="refresh"' + ( isBusy ? ' disabled' : '' ) + '>Refresh validation proof</button>',
+					'<button type="button" class="button" data-factory-wizard-step="2"' + ( isBusy ? ' disabled' : '' ) + '>Back to edit setup</button>',
+					'<button type="button" class="button" data-factory-toggle-advanced' + ( isBusy ? ' disabled' : '' ) + '>Show developer proof</button>',
+				'</div>',
+			'</div>',
+		].join( '' );
+	}
+
 	function renderRawPlanDetails() {
 		if ( ! state.betaPlan ) {
 			return '';
@@ -1038,10 +1279,7 @@
 					'</div>',
 					renderBetaMessage(),
 					renderWizardNotice(),
-					renderWillChangeSummary(),
-					'<div class="factory-demo-plan-preview">',
-						renderBetaPlanPreview(),
-					'</div>',
+					renderHumanPreviewReport(),
 				'</section>',
 			].join( '' );
 		}
@@ -1068,33 +1306,7 @@
 					renderDemoStatus( 'Validation OK', validationOk ),
 					renderDemoStatus( 'Doctor OK', doctorOk ),
 				'</div>',
-				'<div class="factory-demo-grid factory-demo-proof-grid">',
-					'<div>',
-						'<h3>Proof summary</h3>',
-						'<dl class="factory-definition-list factory-definition-list-wide">',
-							'<dt>Run file</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
-							'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
-							'<dt>Safe variables</dt><dd>' + escapeHtml( promptContextSummary( run ) ) + '</dd>',
-							'<dt>Style tokens</dt><dd>' + escapeHtml( styleContextSummary( run ) ) + '</dd>',
-							'<dt>Image source</dt><dd>' + escapeHtml( imageContextSummary( run ) ) + '</dd>',
-							'<dt>Execution</dt><dd>' + escapeHtml( executionCount( run ) ) + ' items</dd>',
-							'<dt>Validation</dt><dd>' + escapeHtml( validationCount( run ) ) + ' checks</dd>',
-							'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
-							'<dt>Latest plan</dt><dd>' + escapeHtml( planSummaryText( plan ) ) + '</dd>',
-						'</dl>',
-					'</div>',
-					'<div>',
-						'<h3>Open frontend</h3>',
-						'<div class="factory-demo-links">',
-							'<a href="' + escapeHtml( homeUrl( '/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Website</a>',
-							'<a href="' + escapeHtml( homeUrl( '/properties/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Properties Archive</a>',
-							'<a class="factory-demo-link-experimental" href="' + escapeHtml( homeUrl( '/properties-native/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Native Filters Proof</a>',
-							'<a href="' + escapeHtml( homeUrl( '/contact/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Contact</a>',
-							'<a href="' + escapeHtml( homeUrl( '/property/turquoise-view-apartment-in-pechersk/' ) ) + '" target="_blank" rel="noopener noreferrer">Open sample Apartment</a>',
-							'<a href="' + escapeHtml( homeUrl( '/property/solomianskyi-business-office/' ) ) + '" target="_blank" rel="noopener noreferrer">Open sample Commercial</a>',
-						'</div>',
-					'</div>',
-				'</div>',
+				renderHumanProofReport( run, validationOk, doctorOk, siteGenerated ),
 			'</section>',
 		].join( '' );
 	}
