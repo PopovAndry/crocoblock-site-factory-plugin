@@ -11,6 +11,15 @@
 		contact_title: 'Contact Kyiv Turquoise Realty',
 		contact_intro: 'Schedule a viewing or request more details about Kyiv properties.',
 	};
+	const wizardSteps = [
+		{ title: 'Requirements', subtitle: 'Theme and plugins' },
+		{ title: 'Describe Business', subtitle: 'Preset and prompt' },
+		{ title: 'Business Info', subtitle: 'Safe copy fields' },
+		{ title: 'Style & Colors', subtitle: 'Coming next' },
+		{ title: 'Images', subtitle: 'Demo pools' },
+		{ title: 'Preview Plan', subtitle: 'Review changes' },
+		{ title: 'Generate / Proof', subtitle: 'Create and open' },
+	];
 
 	if ( ! root ) {
 		return;
@@ -31,6 +40,10 @@
 		betaProductPlan: null,
 		prompt: realEstatePrompt,
 		presetVariables: Object.assign( {}, defaultPresetVariables ),
+		wizardStep: 0,
+		maxWizardStep: 0,
+		previewPayloadKey: '',
+		previewStale: false,
 		lastActionAt: '',
 		advancedOpen: false,
 		noRunsYet: false,
@@ -202,6 +215,49 @@
 		} ).join( ' / ' );
 	}
 
+	function currentPayloadKeyFromState() {
+		return JSON.stringify( {
+			prompt: state.prompt || '',
+			presetVariables: state.presetVariables || {},
+		} );
+	}
+
+	function isPreviewCurrent() {
+		return Boolean( state.previewPayloadKey ) && state.previewPayloadKey === currentPayloadKeyFromState() && ! state.previewStale;
+	}
+
+	function updatePreviewFreshness() {
+		state.previewStale = Boolean( state.previewPayloadKey ) && state.previewPayloadKey !== currentPayloadKeyFromState();
+	}
+
+	function markWizardProgress( step ) {
+		state.maxWizardStep = Math.max( state.maxWizardStep, Math.min( step, wizardSteps.length - 1 ) );
+	}
+
+	function syncWizardInputs() {
+		currentPrompt();
+		currentPresetVariables();
+		updatePreviewFreshness();
+	}
+
+	function goWizardStep( step ) {
+		if ( state.betaAction ) {
+			return;
+		}
+
+		syncWizardInputs();
+
+		const nextStep = Math.max( 0, Math.min( step, wizardSteps.length - 1 ) );
+
+		if ( nextStep > state.maxWizardStep + 1 ) {
+			return;
+		}
+
+		state.wizardStep = nextStep;
+		markWizardProgress( nextStep );
+		render();
+	}
+
 	function runFromLatest() {
 		return state.latest && state.latest.run ? state.latest.run : {};
 	}
@@ -288,7 +344,6 @@
 				'<textarea rows="4" data-factory-prompt>' + escapeHtml( state.prompt || realEstatePrompt ) + '</textarea>',
 				'<p>Beta mode: this prompt is captured for the run manifest. The prepared Real Estate preset is still used.</p>',
 			'</div>',
-			renderPresetVariables(),
 		].join( '' );
 	}
 
@@ -332,8 +387,6 @@
 
 		const productPlan = state.betaProductPlan || {};
 		const sections = Array.isArray( productPlan.sections ) ? productPlan.sections : [];
-		const summary = state.betaPlan && state.betaPlan.summary ? state.betaPlan.summary : {};
-		const items = state.betaPlan && Array.isArray( state.betaPlan.items ) ? state.betaPlan.items.slice( 0, 8 ) : [];
 
 		return [
 			productPlan.title
@@ -358,6 +411,18 @@
 					].join( '' );
 				} ).join( '' ) + '</div>'
 				: '',
+		].join( '' );
+	}
+
+	function renderRawPlanDetails() {
+		if ( ! state.betaPlan ) {
+			return '';
+		}
+
+		const summary = state.betaPlan && state.betaPlan.summary ? state.betaPlan.summary : {};
+		const items = state.betaPlan && Array.isArray( state.betaPlan.items ) ? state.betaPlan.items.slice( 0, 12 ) : [];
+
+		return [
 			'<details class="factory-raw-plan-details">',
 				'<summary>Raw dry-run details</summary>',
 				'<div class="factory-metric-grid factory-demo-metrics">',
@@ -439,7 +504,151 @@
 		].join( '' );
 	}
 
-	function renderRealEstateDemo() {
+	function productPlanSection( label ) {
+		const productPlan = state.betaProductPlan || {};
+		const sections = Array.isArray( productPlan.sections ) ? productPlan.sections : [];
+
+		return sections.find( function ( section ) {
+			return String( section.label || '' ).toLowerCase() === String( label || '' ).toLowerCase();
+		} ) || null;
+	}
+
+	function dependencyStatusFromPlan( needle, optionalFallbackOk ) {
+		const section = productPlanSection( 'Dependencies' );
+		const items = section && Array.isArray( section.items ) ? section.items : [];
+		const text = items.join( ' ' ).toLowerCase();
+		const key = String( needle || '' ).toLowerCase();
+
+		if ( ! text ) {
+			return 'unknown';
+		}
+
+		if ( text.includes( key + ' active' ) || text.includes( key + ' available' ) ) {
+			return 'ok';
+		}
+
+		if ( optionalFallbackOk && text.includes( key ) && text.includes( 'fallback' ) ) {
+			return 'ok';
+		}
+
+		if ( text.includes( key + ' missing' ) ) {
+			return optionalFallbackOk ? 'ok' : 'error';
+		}
+
+		if ( text.includes( key + ' installed but inactive' ) ) {
+			return 'warning';
+		}
+
+		return 'unknown';
+	}
+
+	function renderDependencyRows() {
+		const rows = [
+			{
+				label: 'Kava theme',
+				status: dependencyStatusFromPlan( 'Kava theme', false ),
+				note: 'Required for the current Real Estate demo styling.',
+			},
+			{
+				label: 'JetEngine',
+				status: dependencyStatusFromPlan( 'JetEngine', false ),
+				note: 'Required for property CPT, fields, listings, and Query Builder.',
+			},
+			{
+				label: 'JetSmartFilters',
+				status: 'unknown',
+				note: 'Optional. Enables the experimental native filters proof; /properties/ stays stable without it.',
+			},
+			{
+				label: 'JetFormBuilder',
+				status: dependencyStatusFromPlan( 'JetFormBuilder', true ),
+				note: 'Optional. Request Viewing fallback is valid when unavailable.',
+			},
+		];
+
+		return '<div class="factory-wizard-requirements">' + rows.map( function ( row ) {
+			return '<article><div><strong>' + escapeHtml( row.label ) + '</strong><p>' + escapeHtml( row.note ) + '</p></div>' + badge( row.status ) + '</article>';
+		} ).join( '' ) + '</div>';
+	}
+
+	function renderWizardStepper() {
+		return [
+			'<nav class="factory-wizard-stepper" aria-label="Generation wizard steps">',
+				wizardSteps.map( function ( step, index ) {
+					const isCurrent = index === state.wizardStep;
+					const isDone = index < state.wizardStep || index <= state.maxWizardStep;
+					const isLocked = index > state.maxWizardStep;
+					const classes = [
+						'factory-wizard-step',
+						isCurrent ? 'factory-wizard-step-current' : '',
+						isDone && ! isCurrent ? 'factory-wizard-step-done' : '',
+						isLocked ? 'factory-wizard-step-locked' : '',
+					].filter( Boolean ).join( ' ' );
+
+					return [
+						'<button type="button" class="' + escapeHtml( classes ) + '" data-factory-wizard-step="' + escapeHtml( index ) + '"' + ( isLocked || state.betaAction ? ' disabled' : '' ) + '>',
+							'<span>' + escapeHtml( index ) + '</span>',
+							'<strong>' + escapeHtml( step.title ) + '</strong>',
+							'<small>' + escapeHtml( step.subtitle ) + '</small>',
+						'</button>',
+					].join( '' );
+				} ).join( '' ),
+			'</nav>',
+		].join( '' );
+	}
+
+	function renderWizardControls() {
+		const isBusy = Boolean( state.betaAction );
+		const isLast = state.wizardStep >= wizardSteps.length - 1;
+
+		return [
+			'<div class="factory-wizard-controls">',
+				'<button type="button" class="button" data-factory-wizard-back' + ( state.wizardStep === 0 || isBusy ? ' disabled' : '' ) + '>Back</button>',
+				isLast
+					? ''
+					: '<button type="button" class="button button-primary" data-factory-wizard-next' + ( isBusy ? ' disabled' : '' ) + '>Next</button>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderWizardNotice() {
+		if ( isPreviewCurrent() ) {
+			return '<div class="factory-wizard-notice factory-wizard-notice-ok">Preview is current for this prompt and safe variables.</div>';
+		}
+
+		if ( state.previewStale ) {
+			return '<div class="factory-wizard-notice factory-wizard-notice-warning">Preview needs refresh.</div>';
+		}
+
+		return '<div class="factory-wizard-notice">Preview the plan before generating the demo.</div>';
+	}
+
+	function renderWillChangeSummary() {
+		return [
+			'<div class="factory-wizard-change-grid">',
+				'<section>',
+					'<h4>Will change</h4>',
+					'<ul>',
+						'<li>Selected Home hero copy</li>',
+						'<li>Selected Contact page copy</li>',
+						'<li>Run manifest prompt and safe variable proof</li>',
+						'<li>Generated pages when Generate runs</li>',
+					'</ul>',
+				'</section>',
+				'<section>',
+					'<h4>Will not change</h4>',
+					'<ul>',
+						'<li>CPT, taxonomy, meta, Query Builder, filters, forms, listings, and adapter order</li>',
+						'<li>Property count, property titles, content, districts, terms, images, and native proof page behavior</li>',
+						'<li>/properties/, /properties-native/, and /contact/ routing behavior</li>',
+					'</ul>',
+				'</section>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderWizardStepContent() {
+		const step = state.wizardStep;
 		const run = runFromLatest();
 		const plan = run.plan && run.plan.summary ? run.plan.summary : {};
 		const results = run.results && run.results.summary ? run.results.summary : {};
@@ -448,65 +657,100 @@
 		const validationOk = latestValidationOk();
 		const isBusy = Boolean( state.betaAction );
 
+		if ( step === 0 ) {
+			return [
+				'<section class="factory-wizard-step-panel">',
+					'<h3>Requirements</h3>',
+					'<p>Kava and JetEngine are required for this beta. JetSmartFilters and JetFormBuilder are optional; the generated site keeps working through safe fallbacks.</p>',
+					renderDependencyRows(),
+					! state.betaProductPlan ? '<p class="factory-empty">Dependency details refresh after Preview plan runs.</p>' : '',
+				'</section>',
+			].join( '' );
+		}
+
+		if ( step === 1 ) {
+			return [
+				'<section class="factory-wizard-step-panel">',
+					'<h3>Describe business</h3>',
+					'<div class="factory-wizard-fixed-choice"><span>Website type</span><strong>Real Estate</strong><small>More verticals will come later.</small></div>',
+					renderPromptPreview(),
+				'</section>',
+			].join( '' );
+		}
+
+		if ( step === 2 ) {
+			return [
+				'<section class="factory-wizard-step-panel">',
+					'<h3>Business info</h3>',
+					'<p>These fields are the only copy variables applied in this phase.</p>',
+					renderPresetVariables(),
+				'</section>',
+			].join( '' );
+		}
+
+		if ( step === 3 ) {
+			return [
+				'<section class="factory-wizard-step-panel factory-wizard-placeholder">',
+					'<h3>Style & colors</h3>',
+					'<p>Coming next. This demo currently uses the prepared turquoise Kava/Factory style tokens.</p>',
+					'<div>Color controls are intentionally disabled in Wizard v1.</div>',
+				'</section>',
+			].join( '' );
+		}
+
+		if ( step === 4 ) {
+			return [
+				'<section class="factory-wizard-step-panel factory-wizard-placeholder">',
+					'<h3>Images</h3>',
+					'<p>Coming next. This demo currently uses bundled Apartment, House, and Commercial image pools.</p>',
+					'<div>Image upload is intentionally not included in Wizard v1.</div>',
+				'</section>',
+			].join( '' );
+		}
+
+		if ( step === 5 ) {
+			return [
+				'<section class="factory-wizard-step-panel">',
+					'<div class="factory-wizard-step-heading">',
+						'<div><h3>Preview plan</h3><p>Review the prepared Real Estate preset, captured prompt, safe variables, and guardrails before generation.</p></div>',
+						'<button type="button" class="button button-primary" data-factory-beta-action="plan"' + ( isBusy ? ' disabled' : '' ) + '>',
+							state.betaAction === 'plan' ? 'Previewing...' : 'Preview plan',
+						'</button>',
+					'</div>',
+					renderBetaMessage(),
+					renderWizardNotice(),
+					renderWillChangeSummary(),
+					'<div class="factory-demo-plan-preview">',
+						renderBetaPlanPreview(),
+					'</div>',
+				'</section>',
+			].join( '' );
+		}
+
 		return [
-			'<section class="factory-card factory-card-wide factory-demo-panel">',
-				'<div class="factory-demo-header">',
-					'<div>',
-						'<span class="factory-demo-kicker">Preset flow</span>',
-						'<h2>Real Estate Beta Demo</h2>',
-						'<p>Create, verify, and open the generated Kyiv real estate catalog from this WordPress admin panel.</p>',
+			'<section class="factory-wizard-step-panel">',
+				'<div class="factory-wizard-step-heading">',
+					'<div><h3>Generate / Proof</h3><p>Create the deterministic Real Estate demo, refresh validation proof, and open the generated frontend.</p></div>',
+					'<div class="factory-demo-actions">',
+						'<button type="button" class="button button-primary" data-factory-beta-action="apply"' + ( isBusy || ! isPreviewCurrent() ? ' disabled' : '' ) + '>',
+							state.betaAction === 'apply' ? 'Generating...' : 'Generate Real Estate Demo',
+						'</button>',
+						'<button type="button" class="button" data-factory-beta-action="refresh"' + ( isBusy ? ' disabled' : '' ) + '>',
+							state.betaAction === 'refresh' ? 'Refreshing...' : 'Refresh validation proof',
+						'</button>',
 					'</div>',
-					'<div class="factory-demo-statuses">',
-						renderDemoStatus( 'Site generated', siteGenerated ),
-						renderDemoStatus( 'Validation OK', validationOk ),
-						renderDemoStatus( 'Doctor OK', doctorOk ),
-					'</div>',
-				'</div>',
-				renderPromptPreview(),
-				'<div class="factory-demo-actions">',
-					'<button type="button" class="button button-primary" data-factory-beta-action="plan"' + ( isBusy ? ' disabled' : '' ) + '>',
-						state.betaAction === 'plan' ? 'Previewing...' : 'Preview plan',
-					'</button>',
-					'<button type="button" class="button" data-factory-beta-action="apply"' + ( isBusy ? ' disabled' : '' ) + '>',
-						state.betaAction === 'apply' ? 'Generating...' : 'Generate Real Estate Demo',
-					'</button>',
-					'<button type="button" class="button" data-factory-beta-action="refresh"' + ( isBusy ? ' disabled' : '' ) + '>',
-						state.betaAction === 'refresh' ? 'Refreshing...' : 'Refresh validation proof',
-					'</button>',
 				'</div>',
 				renderBetaMessage(),
 				renderGenerationProgress(),
-				'<div class="factory-demo-grid">',
-					'<div>',
-						'<h3>Preset Summary</h3>',
-						'<ul class="factory-demo-summary">',
-							'<li>30 Kyiv properties</li>',
-							'<li>Image pools by property type</li>',
-							'<li>Generated Home, Properties, and Contact pages</li>',
-							'<li>Query-based Home listing sections</li>',
-							'<li>Polished archive catalog</li>',
-							'<li>Polished single property pages</li>',
-							'<li>Manifest-backed validation proof</li>',
-						'</ul>',
-					'</div>',
-					'<div>',
-						'<h3>Current Convergence Proof</h3>',
-						'<div class="factory-metric-grid factory-demo-metrics">',
-							renderMetric( 'Create', summaryValue( plan, 'create' ) ),
-							renderMetric( 'Update', summaryValue( plan, 'update' ) ),
-							renderMetric( 'Skip', summaryValue( plan, 'skip' ) ),
-							renderMetric( 'Warning', summaryValue( plan, 'warning' ) ),
-							renderMetric( 'Error', summaryValue( plan, 'error' ) ),
-						'</div>',
-					'</div>',
-				'</div>',
-				'<div class="factory-demo-plan-preview">',
-					'<h3>Preview Plan</h3>',
-					renderBetaPlanPreview(),
+				renderWizardNotice(),
+				'<div class="factory-demo-statuses factory-demo-statuses-inline">',
+					renderDemoStatus( 'Site generated', siteGenerated ),
+					renderDemoStatus( 'Validation OK', validationOk ),
+					renderDemoStatus( 'Doctor OK', doctorOk ),
 				'</div>',
 				'<div class="factory-demo-grid factory-demo-proof-grid">',
 					'<div>',
-						'<h3>Apply Proof</h3>',
+						'<h3>Proof summary</h3>',
 						'<dl class="factory-definition-list factory-definition-list-wide">',
 							'<dt>Run file</dt><dd>' + escapeHtml( run.file || '-' ) + '</dd>',
 							'<dt>Prompt</dt><dd>' + escapeHtml( run.prompt || '-' ) + '</dd>',
@@ -514,10 +758,11 @@
 							'<dt>Execution</dt><dd>' + escapeHtml( executionCount( run ) ) + ' items</dd>',
 							'<dt>Validation</dt><dd>' + escapeHtml( validationCount( run ) ) + ' checks</dd>',
 							'<dt>Results</dt><dd>' + escapeHtml( resultsSummaryText( results ) ) + '</dd>',
+							'<dt>Latest plan</dt><dd>' + escapeHtml( planSummaryText( plan ) ) + '</dd>',
 						'</dl>',
 					'</div>',
 					'<div>',
-						'<h3>Open Frontend</h3>',
+						'<h3>Open frontend</h3>',
 						'<div class="factory-demo-links">',
 							'<a href="' + escapeHtml( homeUrl( '/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Website</a>',
 							'<a href="' + escapeHtml( homeUrl( '/properties/' ) ) + '" target="_blank" rel="noopener noreferrer">Open Properties Archive</a>',
@@ -528,6 +773,33 @@
 						'</div>',
 					'</div>',
 				'</div>',
+			'</section>',
+		].join( '' );
+	}
+
+	function renderRealEstateDemo() {
+		const run = runFromLatest();
+		const siteGenerated = Boolean( run.file ) && executionCount( run ) > 0;
+		const doctorOk = statusValue( state.doctor && state.doctor.status ) === 'ok';
+		const validationOk = latestValidationOk();
+
+		return [
+			'<section class="factory-card factory-card-wide factory-demo-panel">',
+				'<div class="factory-demo-header">',
+					'<div>',
+						'<span class="factory-demo-kicker">Generation wizard</span>',
+						'<h2>Real Estate Beta Demo</h2>',
+						'<p>Create, preview, verify, and open the generated real estate catalog through a guided flow.</p>',
+					'</div>',
+					'<div class="factory-demo-statuses">',
+						renderDemoStatus( 'Site generated', siteGenerated ),
+						renderDemoStatus( 'Validation OK', validationOk ),
+						renderDemoStatus( 'Doctor OK', doctorOk ),
+					'</div>',
+				'</div>',
+				renderWizardStepper(),
+				renderWizardStepContent(),
+				renderWizardControls(),
 			'</section>',
 		].join( '' );
 	}
@@ -692,6 +964,7 @@
 				'</div>',
 				expanded
 					? '<div class="factory-advanced-body">' +
+						renderRawPlanDetails() +
 						renderRunsTable() +
 						renderSelectedRun() +
 						renderAdapters() +
@@ -738,9 +1011,28 @@
 			} );
 		} );
 
+		root.querySelectorAll( '[data-factory-wizard-step]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				goWizardStep( Number( button.getAttribute( 'data-factory-wizard-step' ) ) );
+			} );
+		} );
+
+		root.querySelectorAll( '[data-factory-wizard-back]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				goWizardStep( state.wizardStep - 1 );
+			} );
+		} );
+
+		root.querySelectorAll( '[data-factory-wizard-next]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				goWizardStep( state.wizardStep + 1 );
+			} );
+		} );
+
 		root.querySelectorAll( '[data-factory-prompt]' ).forEach( function ( textarea ) {
 			textarea.addEventListener( 'input', function () {
 				state.prompt = textarea.value;
+				updatePreviewFreshness();
 			} );
 		} );
 
@@ -750,6 +1042,7 @@
 
 				if ( key ) {
 					state.presetVariables[ key ] = field.value;
+					updatePreviewFreshness();
 				}
 			} );
 		} );
@@ -828,6 +1121,7 @@
 	function previewRealEstatePlan() {
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
+		const payloadKey = currentPayloadKeyFromState();
 		state.betaAction = 'plan';
 		state.betaMessage = null;
 		render();
@@ -845,6 +1139,9 @@
 			.then( function ( data ) {
 				state.betaPlan = data.plan || null;
 				state.betaProductPlan = data.product_plan || null;
+				state.previewPayloadKey = payloadKey;
+				state.previewStale = false;
+				markWizardProgress( 6 );
 				markLastAction();
 				setBetaMessage( 'ok', 'Preview plan generated.' );
 			} )
@@ -860,6 +1157,16 @@
 	function applyRealEstatePreset() {
 		const prompt = currentPrompt();
 		const presetVariables = currentPresetVariables();
+
+		if ( ! isPreviewCurrent() ) {
+			state.betaMessage = {
+				status: 'warning',
+				message: 'Preview needs refresh.',
+			};
+			render();
+			return;
+		}
+
 		state.betaAction = 'apply';
 		state.betaMessage = null;
 		render();
@@ -887,6 +1194,8 @@
 				} else {
 					setBetaMessage( 'ok', 'Real Estate demo generated successfully.' );
 				}
+				state.wizardStep = 6;
+				markWizardProgress( 6 );
 				return refreshDashboardData();
 			} )
 			.catch( function ( error ) {
