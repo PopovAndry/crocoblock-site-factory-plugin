@@ -131,6 +131,11 @@
 		betaMessage: null,
 		betaPlan: null,
 		betaProductPlan: null,
+		promptInterpretation: null,
+		promptInterpretationWarnings: [],
+		promptInterpretationNotices: [],
+		promptInterpretationError: '',
+		promptAnalyzing: false,
 		prompt: realEstatePrompt,
 		presetVariables: Object.assign( {}, defaultPresetVariables ),
 		styleContext: Object.assign( {}, defaultStyleContext ),
@@ -512,8 +517,172 @@
 				'</div>',
 				'<textarea rows="4" data-factory-prompt>' + escapeHtml( state.prompt || realEstatePrompt ) + '</textarea>',
 				'<p>Beta mode: this prompt is captured for the run manifest. The prepared Real Estate preset is still used.</p>',
+				'<div class="factory-prompt-actions">',
+					'<button type="button" class="button button-secondary" data-factory-ai-action="interpret"' + ( state.promptAnalyzing || state.betaAction ? ' disabled' : '' ) + '>',
+						state.promptAnalyzing ? 'Analyzing...' : 'Analyze Prompt',
+					'</button>',
+					'<span>Interpretation only. No changes are applied automatically.</span>',
+				'</div>',
+			'</div>',
+			renderPromptInterpretation(),
+		].join( '' );
+	}
+
+	function confidencePercent( value ) {
+		const number = Number( value || 0 );
+
+		return Math.max( 0, Math.min( 100, Math.round( number * 100 ) ) ) + '%';
+	}
+
+	function suggestionValue( item ) {
+		return item && typeof item === 'object' ? String( item.value || '' ) : '';
+	}
+
+	function renderPromptInterpretation() {
+		const interpretation = state.promptInterpretation;
+		const warnings = Array.isArray( state.promptInterpretationWarnings ) ? state.promptInterpretationWarnings : [];
+		const notices = Array.isArray( state.promptInterpretationNotices ) ? state.promptInterpretationNotices : [];
+
+		if ( state.promptAnalyzing ) {
+			return '<div class="factory-prompt-intelligence factory-prompt-intelligence-loading"><strong>Analyzing prompt...</strong><p>Local interpretation is running. No external AI call is made.</p></div>';
+		}
+
+		if ( state.promptInterpretationError ) {
+			return '<div class="factory-prompt-intelligence factory-prompt-intelligence-error"><strong>Prompt interpretation failed</strong><p>' + escapeHtml( state.promptInterpretationError ) + '</p></div>';
+		}
+
+		if ( ! interpretation ) {
+			return [
+				'<div class="factory-prompt-intelligence">',
+					'<div class="factory-prompt-intelligence-heading">',
+						'<div>',
+							'<h4>Prompt interpretation</h4>',
+							'<p>Use Analyze Prompt to produce local, structured suggestions. AI suggestions do not change the site until you apply them and run Preview.</p>',
+						'</div>',
+						'<span class="factory-badge factory-badge-unknown">Not analyzed</span>',
+					'</div>',
+				'</div>',
+			].join( '' );
+		}
+
+		return [
+			'<div class="factory-prompt-intelligence">',
+				'<div class="factory-prompt-intelligence-heading">',
+					'<div>',
+						'<h4>Prompt interpretation</h4>',
+						'<p>AI suggestions do not change the site until you apply them and run Preview.</p>',
+					'</div>',
+					'<span class="factory-badge factory-badge-ok">Local mock</span>',
+				'</div>',
+				renderPromptIntentSummary( interpretation ),
+				renderPromptSuggestionGroups( interpretation ),
+				renderPromptUnsupportedRequests( interpretation ),
+				renderPromptMissingQuestions( interpretation ),
+				warnings.length ? '<div class="factory-prompt-message factory-prompt-message-warning">' + warnings.map( escapeHtml ).join( '<br>' ) + '</div>' : '',
+				notices.length ? '<div class="factory-prompt-message">' + notices.map( escapeHtml ).join( '<br>' ) + '</div>' : '',
 			'</div>',
 		].join( '' );
+	}
+
+	function renderPromptIntentSummary( interpretation ) {
+		const business = interpretation.business_name || {};
+		const location = interpretation.location || {};
+		const tone = interpretation.tone || {};
+		const color = interpretation.color_preference || {};
+
+		return [
+			'<div class="factory-prompt-intent-grid">',
+				renderPromptIntentItem( 'Detected vertical', interpretation.detected_vertical || 'unknown', confidencePercent( interpretation.confidence ) ),
+				renderPromptIntentItem( 'Recommended preset', interpretation.recommended_preset || 'real-estate', 'Safe preset' ),
+				renderPromptIntentItem( 'Business name', business.value || '-', confidencePercent( business.confidence ) ),
+				renderPromptIntentItem( 'Location', location.value || '-', confidencePercent( location.confidence ) ),
+				renderPromptIntentItem( 'Tone', tone.value || '-', confidencePercent( tone.confidence ) ),
+				renderPromptIntentItem( 'Color', color.value || '-', confidencePercent( color.confidence ) ),
+			'</div>',
+		].join( '' );
+	}
+
+	function renderPromptIntentItem( label, value, meta ) {
+		return [
+			'<article>',
+				'<span>' + escapeHtml( label ) + '</span>',
+				'<strong>' + escapeHtml( value ) + '</strong>',
+				'<small>' + escapeHtml( meta ) + '</small>',
+			'</article>',
+		].join( '' );
+	}
+
+	function renderPromptSuggestionGroups( interpretation ) {
+		const copySuggestions = interpretation.safe_preset_variable_suggestions || {};
+		const styleSuggestions = interpretation.safe_style_context_suggestions || {};
+		const imageSuggestions = interpretation.safe_image_context_suggestions || {};
+		const copyKeys = [ 'agency_name', 'hero_title', 'hero_subtitle', 'contact_title', 'contact_intro' ];
+		const styleKeys = [ 'tone', 'primary_preset' ];
+
+		return [
+			'<div class="factory-prompt-suggestion-grid">',
+				'<section>',
+					'<div class="factory-prompt-suggestion-heading"><h5>Safe copy suggestions</h5><button type="button" class="button button-small" data-factory-apply-interpretation="copy">Apply copy</button></div>',
+					'<ul>',
+						copyKeys.map( function ( key ) {
+							return '<li><span>' + escapeHtml( presetVariableLabel( key ) ) + '</span><strong>' + escapeHtml( suggestionValue( copySuggestions[ key ] ) || '-' ) + '</strong></li>';
+						} ).join( '' ),
+					'</ul>',
+				'</section>',
+				'<section>',
+					'<div class="factory-prompt-suggestion-heading"><h5>Style suggestions</h5><button type="button" class="button button-small" data-factory-apply-interpretation="style">Apply style</button></div>',
+					'<ul>',
+						styleKeys.map( function ( key ) {
+							return '<li><span>' + escapeHtml( key === 'tone' ? 'Tone' : 'Primary preset' ) + '</span><strong>' + escapeHtml( suggestionValue( styleSuggestions[ key ] ) || '-' ) + '</strong></li>';
+						} ).join( '' ),
+					'</ul>',
+				'</section>',
+				'<section>',
+					'<div class="factory-prompt-suggestion-heading"><h5>Image suggestions</h5><span>Informational</span></div>',
+					'<ul>',
+						'<li><span>Source</span><strong>' + escapeHtml( suggestionValue( imageSuggestions.source ) || 'demo_pool' ) + '</strong></li>',
+						'<li><span>Mode</span><strong>' + escapeHtml( suggestionValue( imageSuggestions.mode ) || 'round_robin' ) + '</strong></li>',
+					'</ul>',
+					'<p>Image mode is fixed in this beta and is not applied from prompt interpretation.</p>',
+				'</section>',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderPromptUnsupportedRequests( interpretation ) {
+		const unsupported = Array.isArray( interpretation.unsupported_requests ) ? interpretation.unsupported_requests : [];
+		const features = Array.isArray( interpretation.requested_features ) ? interpretation.requested_features : [];
+
+		if ( ! unsupported.length && ! features.length ) {
+			return '';
+		}
+
+		return [
+			'<div class="factory-prompt-feature-grid">',
+				features.length
+					? '<section><h5>Detected supported requests</h5><ul>' + features.map( function ( item ) {
+						return '<li>' + escapeHtml( item.label || '' ) + '</li>';
+					} ).join( '' ) + '</ul></section>'
+					: '',
+				unsupported.length
+					? '<section><h5>Unsupported in this beta</h5><ul>' + unsupported.map( function ( item ) {
+						return '<li><strong>' + escapeHtml( item.label || '' ) + '</strong><span>' + escapeHtml( item.reason || '' ) + '</span><small>' + escapeHtml( item.safe_alternative || '' ) + '</small></li>';
+					} ).join( '' ) + '</ul></section>'
+					: '',
+			'</div>',
+		].join( '' );
+	}
+
+	function renderPromptMissingQuestions( interpretation ) {
+		const questions = Array.isArray( interpretation.missing_questions ) ? interpretation.missing_questions : [];
+
+		if ( ! questions.length ) {
+			return '';
+		}
+
+		return '<div class="factory-prompt-questions"><h5>Missing questions</h5><ul>' + questions.map( function ( question ) {
+			return '<li>' + escapeHtml( question ) + '</li>';
+		} ).join( '' ) + '</ul></div>';
 	}
 
 	function renderPresetVariables() {
@@ -1662,6 +1831,22 @@
 			} );
 		} );
 
+		root.querySelectorAll( '[data-factory-ai-action]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				const action = button.getAttribute( 'data-factory-ai-action' );
+
+				if ( action === 'interpret' ) {
+					interpretPrompt();
+				}
+			} );
+		} );
+
+		root.querySelectorAll( '[data-factory-apply-interpretation]' ).forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				applyPromptInterpretation( button.getAttribute( 'data-factory-apply-interpretation' ) );
+			} );
+		} );
+
 		root.querySelectorAll( '[data-factory-beta-action]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
 				const action = button.getAttribute( 'data-factory-beta-action' );
@@ -1753,6 +1938,86 @@
 		state.imageContext = Object.assign( {}, defaultImageContext, state.imageContext );
 
 		return state.imageContext;
+	}
+
+	function interpretPrompt() {
+		const prompt = currentPrompt();
+		const presetVariables = currentPresetVariables();
+		const styleContext = currentStyleContext();
+		const imageContext = currentImageContext();
+
+		state.promptAnalyzing = true;
+		state.promptInterpretationError = '';
+		state.promptInterpretationWarnings = [];
+		state.promptInterpretationNotices = [];
+		render();
+
+		request(
+			config.endpoints?.aiInterpretPrompt || '/ai/interpret-prompt',
+			{
+				method: 'POST',
+				body: {
+					prompt: prompt,
+					current_context: {
+						preset: 'real-estate',
+						preset_variables: presetVariables,
+						style_context: styleContext,
+						image_context: imageContext,
+					},
+					mode: 'local_mock',
+				},
+			}
+		)
+			.then( function ( data ) {
+				state.promptInterpretation = data.interpretation || null;
+				state.promptInterpretationWarnings = Array.isArray( data.warnings ) ? data.warnings : [];
+				state.promptInterpretationNotices = Array.isArray( data.notices ) ? data.notices : [];
+			} )
+			.catch( function ( error ) {
+				state.promptInterpretation = null;
+				state.promptInterpretationError = error.message;
+			} )
+			.finally( function () {
+				state.promptAnalyzing = false;
+				render();
+			} );
+	}
+
+	function applyPromptInterpretation( group ) {
+		const interpretation = state.promptInterpretation;
+
+		if ( ! interpretation ) {
+			return;
+		}
+
+		if ( group === 'copy' ) {
+			const suggestions = interpretation.safe_preset_variable_suggestions || {};
+			[ 'agency_name', 'hero_title', 'hero_subtitle', 'contact_title', 'contact_intro' ].forEach( function ( key ) {
+				const value = suggestionValue( suggestions[ key ] );
+
+				if ( value ) {
+					state.presetVariables[ key ] = value;
+				}
+			} );
+		}
+
+		if ( group === 'style' ) {
+			const suggestions = interpretation.safe_style_context_suggestions || {};
+			const tone = suggestionValue( suggestions.tone );
+			const primaryPreset = suggestionValue( suggestions.primary_preset );
+
+			if ( styleToneOverrides[ tone ] ) {
+				state.styleContext.tone = tone;
+			}
+
+			if ( colorPresetTokens[ primaryPreset ] ) {
+				state.styleContext.primary_preset = primaryPreset;
+			}
+		}
+
+		updatePreviewFreshness();
+		state.promptInterpretationNotices = [ 'Suggestions applied to dashboard fields. Run Preview before Generate.' ];
+		render();
 	}
 
 	function previewRealEstatePlan() {

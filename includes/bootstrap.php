@@ -26,6 +26,7 @@ require_once __DIR__ . '/blueprint/blueprint-normalizer.php';
 require_once __DIR__ . '/blueprint/blueprint-validator.php';
 require_once __DIR__ . '/blueprint/blueprint-preset-manager.php';
 require_once __DIR__ . '/ai/settings.php';
+require_once __DIR__ . '/ai/prompt-interpreter.php';
 require_once __DIR__ . '/ai/blueprint-generator.php';
 require_once __DIR__ . '/commands/fix.php';
 require_once __DIR__ . '/commands/dry-run.php';
@@ -44,6 +45,7 @@ require_once __DIR__ . '/commands/commands.php';
 require_once __DIR__ . '/commands/adapters.php';
 require_once __DIR__ . '/api/rest.php';
 require_once __DIR__ . '/api/ai-settings-rest.php';
+require_once __DIR__ . '/api/ai-interpret-rest.php';
 require_once FACTORY_PLUGIN_DIR . 'admin/dashboard.php';
 require_once FACTORY_PLUGIN_DIR . 'admin/ai-settings.php';
 
