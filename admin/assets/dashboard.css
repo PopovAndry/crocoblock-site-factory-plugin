@@ -215,6 +215,36 @@
 	box-shadow: 0 0 0 1px #14b8a6;
 }
 
+.factory-wizard-step--next-available {
+	background: #f6fffd;
+	border-color: #7dd3c7;
+	box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.22);
+	cursor: pointer;
+}
+
+.factory-wizard-step--next-available:hover,
+.factory-wizard-step--next-available:focus {
+	background: #ecfdf9;
+	border-color: #14b8a6;
+	box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.22);
+}
+
+.factory-wizard-step--next-available em {
+	align-self: end;
+	background: #dffaf4;
+	border: 1px solid #99e2d3;
+	border-radius: 999px;
+	color: #0f766e;
+	display: inline-flex;
+	font-size: 10px;
+	font-style: normal;
+	font-weight: 800;
+	justify-self: start;
+	line-height: 1;
+	padding: 5px 7px;
+	text-transform: uppercase;
+}
+
 .factory-wizard-step-done span {
 	background: #edfaef;
 	border-color: #68de7c;

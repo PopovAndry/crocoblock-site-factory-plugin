@@ -1365,19 +1365,24 @@
 				wizardSteps.map( function ( step, index ) {
 					const isCurrent = index === state.wizardStep;
 					const isDone = index < state.wizardStep || index <= state.maxWizardStep;
-					const isLocked = ! canVisitWizardStep( index, false );
+					const isReachable = canVisitWizardStep( index, false );
+					const isNextAvailable = ! state.betaAction && ! isCurrent && index === state.wizardStep + 1 && canVisitWizardStep( index, true );
+					const isLocked = ! isReachable && ! isNextAvailable;
 					const classes = [
 						'factory-wizard-step',
 						isCurrent ? 'factory-wizard-step-current' : '',
 						isDone && ! isCurrent ? 'factory-wizard-step-done' : '',
+						isNextAvailable ? 'factory-wizard-step--next-available' : '',
 						isLocked ? 'factory-wizard-step-locked' : '',
 					].filter( Boolean ).join( ' ' );
+					const label = isNextAvailable ? 'Continue to ' + step.title : 'Go to ' + step.title;
 
 					return [
-						'<button type="button" class="' + escapeHtml( classes ) + '" data-factory-wizard-step="' + escapeHtml( index ) + '"' + ( isLocked || state.betaAction ? ' disabled' : '' ) + '>',
+						'<button type="button" class="' + escapeHtml( classes ) + '" data-factory-wizard-step="' + escapeHtml( index ) + '"' + ( isNextAvailable ? ' data-factory-wizard-next-available="true"' : '' ) + ' aria-label="' + escapeHtml( label ) + '" title="' + escapeHtml( label ) + '"' + ( isLocked || state.betaAction ? ' disabled' : '' ) + '>',
 							'<span>' + escapeHtml( index ) + '</span>',
 							'<strong>' + escapeHtml( step.title ) + '</strong>',
 							'<small>' + escapeHtml( step.subtitle ) + '</small>',
+							isNextAvailable ? '<em>Next step</em>' : '',
 						'</button>',
 					].join( '' );
 				} ).join( '' ),
@@ -1785,7 +1790,8 @@
 
 		root.querySelectorAll( '[data-factory-wizard-step]' ).forEach( function ( button ) {
 			button.addEventListener( 'click', function () {
-				goWizardStep( Number( button.getAttribute( 'data-factory-wizard-step' ) ) );
+				const allowNext = button.getAttribute( 'data-factory-wizard-next-available' ) === 'true';
+				goWizardStep( Number( button.getAttribute( 'data-factory-wizard-step' ) ), allowNext );
 			} );
 		} );
 
