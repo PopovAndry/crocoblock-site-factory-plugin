@@ -121,6 +121,8 @@
 		adapters: [],
 		requirements: null,
 		requirementsError: '',
+		aiSettings: null,
+		aiSettingsError: '',
 		selectedRun: null,
 		selectedFile: '',
 		errors: [],
@@ -1122,6 +1124,72 @@
 		} ).join( '' ) + '</div>';
 	}
 
+	function aiModelLabel( key ) {
+		const settings = state.aiSettings || {};
+		const models = Array.isArray( settings.available_models ) ? settings.available_models : [];
+		const model = models.find( function ( item ) {
+			return item.key === key;
+		} );
+
+		return model ? model.label || model.key : ( key || 'Balanced' );
+	}
+
+	function aiKeySourceLabel( source ) {
+		const labels = {
+			constant: 'constant',
+			env: 'env',
+			option: 'saved',
+			none: 'none',
+		};
+
+		return labels[ source ] || 'unknown';
+	}
+
+	function renderAIStatusCard() {
+		const settings = state.aiSettings || {};
+		const hasKey = Boolean( settings.has_key );
+		const statusLabel = hasKey ? 'Configured' : 'Not configured';
+		const statusClass = hasKey ? 'ok' : 'unknown';
+		const provider = settings.provider === 'openai' ? 'OpenAI' : ( settings.provider || 'OpenAI' );
+		const selectedModel = settings.selected_model || 'balanced';
+		const maskedKey = settings.masked_key || '';
+		const keySource = aiKeySourceLabel( settings.key_source || 'none' );
+
+		if ( state.aiSettingsError ) {
+			return [
+				'<article class="factory-ai-status-card factory-ai-status-card-unknown">',
+					'<div>',
+						'<div class="factory-requirement-meta">Informational</div>',
+						'<strong>AI assistance</strong>',
+						'<p>Unable to verify AI settings. The deterministic Real Estate preset still works.</p>',
+					'</div>',
+					'<span class="factory-badge factory-badge-unknown">Unknown</span>',
+				'</article>',
+			].join( '' );
+		}
+
+		return [
+			'<article class="factory-ai-status-card factory-ai-status-card-' + escapeHtml( statusClass ) + '">',
+				'<div class="factory-ai-status-main">',
+					'<div class="factory-requirement-meta">Informational only</div>',
+					'<strong>AI assistance</strong>',
+					'<p>' + ( hasKey ? 'Configured, not active in this flow.' : 'Not configured, deterministic preset still works.' ) + '</p>',
+					'<dl class="factory-ai-status-meta">',
+						'<dt>Provider</dt><dd>' + escapeHtml( provider ) + '</dd>',
+						'<dt>Model profile</dt><dd>' + escapeHtml( aiModelLabel( selectedModel ) ) + '</dd>',
+						'<dt>Key source</dt><dd>' + escapeHtml( keySource ) + '</dd>',
+						hasKey && maskedKey ? '<dt>Masked key</dt><dd><code>' + escapeHtml( maskedKey ) + '</code></dd>' : '',
+					'</dl>',
+					'<p class="factory-ai-status-note">AI is not used for this deterministic Real Estate preset yet.</p>',
+				'</div>',
+				'<div class="factory-ai-status-actions">',
+					'<span class="factory-badge factory-badge-' + escapeHtml( statusClass ) + '">' + escapeHtml( statusLabel ) + '</span>',
+					! hasKey ? '<a class="button button-secondary" href="admin.php?page=factory-ai-settings">AI Settings</a>' : '<a class="button button-secondary" href="admin.php?page=factory-ai-settings">Manage</a>',
+				'</div>',
+			'</article>',
+		].join( '' );
+	}
+
 	function renderWizardStepper() {
 		return [
 			'<nav class="factory-wizard-stepper" aria-label="Generation wizard steps">',
@@ -1226,6 +1294,7 @@
 						escapeHtml( summary ),
 					'</div>',
 					renderDependencyRows(),
+					renderAIStatusCard(),
 					state.requirementsError ? '<p class="factory-empty">Requirements check failed: ' + escapeHtml( state.requirementsError ) + '</p>' : '',
 					'<p class="factory-empty">No install or activation actions are available in this beta. Install required dependencies in WordPress, then refresh this dashboard.</p>',
 				'</section>',
@@ -1818,12 +1887,14 @@
 			request( config.endpoints?.latest || '/run/latest' ),
 			request( config.endpoints?.adapters || '/adapters' ),
 			request( config.endpoints?.realEstateRequirements || '/beta/real-estate/requirements' ),
+			request( config.endpoints?.aiSettings || '/ai/settings' ),
 		] ).then( function ( results ) {
-			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements' ];
+			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements', 'AI settings' ];
 			const failures = [];
 
 			state.noRunsYet = false;
 			state.requirementsError = '';
+			state.aiSettingsError = '';
 
 			results.forEach( function ( result, index ) {
 				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
@@ -1832,6 +1903,10 @@
 				}
 
 				if ( result.status === 'rejected' ) {
+					if ( 'AI settings' === labels[ index ] ) {
+						return;
+					}
+
 					failures.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
@@ -1874,6 +1949,13 @@
 				state.requirements = null;
 				state.requirementsError = results[4].reason ? results[4].reason.message : 'Unable to verify requirements.';
 			}
+
+			if ( results[5].status === 'fulfilled' ) {
+				state.aiSettings = results[5].value;
+			} else {
+				state.aiSettings = null;
+				state.aiSettingsError = results[5].reason ? results[5].reason.message : 'Unable to verify AI settings.';
+			}
 		} );
 	}
 
@@ -1886,12 +1968,14 @@
 			request( config.endpoints?.latest || '/run/latest' ),
 			request( config.endpoints?.adapters || '/adapters' ),
 			request( config.endpoints?.realEstateRequirements || '/beta/real-estate/requirements' ),
+			request( config.endpoints?.aiSettings || '/ai/settings' ),
 		] ).then( function ( results ) {
-			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements' ];
+			const labels = [ 'Doctor', 'Runs', 'Latest run', 'Adapters', 'Requirements', 'AI settings' ];
 
 			state.errors = [];
 			state.noRunsYet = false;
 			state.requirementsError = '';
+			state.aiSettingsError = '';
 
 			results.forEach( function ( result, index ) {
 				if ( isFirstRunEmptyResult( labels[ index ], result ) ) {
@@ -1900,6 +1984,10 @@
 				}
 
 				if ( result.status === 'rejected' ) {
+					if ( 'AI settings' === labels[ index ] ) {
+						return;
+					}
+
 					state.errors.push( labels[ index ] + ': ' + result.reason.message );
 				}
 			} );
@@ -1935,6 +2023,13 @@
 			} else {
 				state.requirements = null;
 				state.requirementsError = results[4].reason ? results[4].reason.message : 'Unable to verify requirements.';
+			}
+
+			if ( results[5].status === 'fulfilled' ) {
+				state.aiSettings = results[5].value;
+			} else {
+				state.aiSettings = null;
+				state.aiSettingsError = results[5].reason ? results[5].reason.message : 'Unable to verify AI settings.';
 			}
 
 			render();
