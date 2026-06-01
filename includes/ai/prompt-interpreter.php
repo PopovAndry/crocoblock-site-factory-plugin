@@ -198,7 +198,7 @@ function factory_ai_interpreter_unsupported_requests( string $lower ): array {
 
 	$checks = [
 		[ [ 'upload', 'my images' ], 'Uploaded images', 'Image upload flows are not implemented in this beta.', 'Use bundled real estate image pools.' ],
-		[ [ 'ai images', 'generate images', 'image ai' ], 'AI images', 'AI image generation is not enabled.', 'Use bundled real estate image pools.' ],
+		[ [ 'ai generated images', 'ai images', 'generate images', 'generated images', 'image ai' ], 'AI generated images', 'AI image generation is not implemented in this beta.', 'Use bundled real estate image pools.' ],
 		[ [ 'custom filter', 'custom filters' ], 'Custom filters', 'Filter schema is not prompt-controlled.', 'Use the prepared Real Estate filter set.' ],
 		[ [ 'custom layout', 'arbitrary layout', 'new layout' ], 'Arbitrary layouts', 'Layout topology is not prompt-controlled.', 'Use the prepared Real Estate layout.' ],
 		[ [ 'job board', 'restaurant', 'hotel', 'clinic', 'shop' ], 'Other vertical', 'Only the Real Estate preset is available in this beta flow.', 'Use the Real Estate demo preset.' ],
