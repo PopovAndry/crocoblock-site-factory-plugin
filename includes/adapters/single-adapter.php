@@ -288,7 +288,7 @@ class Factory_Single_Adapter {
 		ob_start();
 		?>
 
-		<main class="factory-single-wrap factory-property-single-wrap" style="max-width: 1180px; margin: 64px auto 80px; padding: 0 24px;">
+		<main class="factory-single-wrap factory-property-single-wrap" style="max-width: 1180px; margin: 40px auto 36px; padding: 0 24px;">
 			<article <?php post_class( 'factory-single factory-property-single', $post_id ); ?>>
 				<header style="margin-bottom: 34px;">
 					<?php if ( ! empty( $gallery_images ) ) : ?>
@@ -479,15 +479,15 @@ class Factory_Single_Adapter {
 			: 'Kyiv Turquoise Realty';
 		$year         = gmdate( 'Y' );
 
-		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 44px 24px 24px;">';
+		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 38px 24px 22px;">';
 		$html .= '<div style="max-width: 1120px; margin: 0 auto;">';
 		$html .= '<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(150px, 0.7fr)); gap: 24px; align-items: start;">';
-		$html .= '<div><strong style="display: block; font-size: 22px; line-height: 1.2; margin-bottom: 10px; color: #fff;">' . esc_html( $brand ) . '</strong><p style="color: rgba(255,255,255,0.72); font-size: 14px; line-height: 1.65; margin: 0;">Generated real estate catalog with validated property pages.</p></div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none;">Contact</a></div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.82);">Contact agency</span></div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.82);">Validation proof available in Site Factory</span></div>';
+		$html .= '<div><strong style="display: block; font-size: 22px; line-height: 1.2; margin-bottom: 10px; color: #fff;">' . esc_html( $brand ) . '</strong><p style="color: rgba(255,255,255,0.88); font-size: 14px; line-height: 1.6; margin: 0;">Generated real estate catalog with validated property pages.</p></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none;">Contact</a></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.9);">Contact agency</span></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.9);">Validation proof available in Site Factory</span></div>';
 		$html .= '</div>';
-		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.62); font-size: 13px; margin-top: 28px; padding-top: 18px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
+		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.78); font-size: 13px; margin-top: 24px; padding-top: 16px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
 		$html .= '</div>';
 		$html .= '</footer>';
 

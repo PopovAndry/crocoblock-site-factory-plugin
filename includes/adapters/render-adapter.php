@@ -68,6 +68,7 @@ class Factory_Render_Adapter {
 			$styles[] = '.factory-generated-home-page .main-navigation a:hover,.factory-generated-home-page .menu a:hover,.factory-generated-home-page nav a:hover,.factory-generated-home-page .current-menu-item > a,.factory-generated-properties-page .main-navigation a:hover,.factory-generated-properties-page .menu a:hover,.factory-generated-properties-page nav a:hover,.factory-generated-properties-page .current-menu-item > a,.factory-generated-contact-page .main-navigation a:hover,.factory-generated-contact-page .menu a:hover,.factory-generated-contact-page nav a:hover,.factory-generated-contact-page .current-menu-item > a,.factory-generated-property-single-page .main-navigation a:hover,.factory-generated-property-single-page .menu a:hover,.factory-generated-property-single-page nav a:hover,.factory-generated-property-single-page .current-menu-item > a{color:' . $accent . '!important;}';
 			$styles[] = '.factory-generated-home-page button,.factory-generated-home-page input[type="submit"],.factory-generated-properties-page button,.factory-generated-properties-page input[type="submit"],.factory-generated-contact-page button,.factory-generated-contact-page input[type="submit"],.factory-generated-property-single-page button,.factory-generated-property-single-page input[type="submit"]{background:' . $button . '!important;border-color:' . $button . '!important;color:' . $button_text . '!important;}';
 			$styles[] = '.factory-generated-home-page button:hover,.factory-generated-home-page input[type="submit"]:hover,.factory-generated-properties-page button:hover,.factory-generated-properties-page input[type="submit"]:hover,.factory-generated-contact-page button:hover,.factory-generated-contact-page input[type="submit"]:hover,.factory-generated-property-single-page button:hover,.factory-generated-property-single-page input[type="submit"]:hover{background:' . $primary . '!important;border-color:' . $primary . '!important;color:' . $button_text . '!important;}';
+			$styles[] = '.factory-generated-properties-page .breadcrumbs,.factory-generated-properties-page .breadcrumb,.factory-generated-properties-page .breadcrumb-trail,.factory-generated-contact-page .breadcrumbs,.factory-generated-contact-page .breadcrumb,.factory-generated-contact-page .breadcrumb-trail,.factory-generated-property-single-page .breadcrumbs,.factory-generated-property-single-page .breadcrumb,.factory-generated-property-single-page .breadcrumb-trail{margin-bottom:12px!important;padding-bottom:0!important}.factory-generated-properties-page .breadcrumbs a,.factory-generated-properties-page .breadcrumb a,.factory-generated-contact-page .breadcrumbs a,.factory-generated-contact-page .breadcrumb a,.factory-generated-property-single-page .breadcrumbs a,.factory-generated-property-single-page .breadcrumb a{color:' . $primary . '!important;}';
 			$styles[] = '.factory-generated-home-page .site-footer,.factory-generated-home-page footer.site-footer,.factory-generated-properties-page .site-footer,.factory-generated-properties-page footer.site-footer,.factory-generated-contact-page .site-footer,.factory-generated-contact-page footer.site-footer,.factory-generated-property-single-page .site-footer,.factory-generated-property-single-page footer.site-footer{display:none!important;}';
 			$styles[] = '@media(max-width:900px){.factory-property-search-layout{grid-template-columns:1fr!important}.factory-property-search-layout aside{position:static!important}}@media(max-width:760px){.factory-property-card-row{grid-template-columns:1fr!important}.factory-property-card-row img{min-height:220px!important}.factory-generated-footer [style*="grid-template-columns"]{grid-template-columns:1fr!important}}';
 		}
@@ -1356,7 +1357,7 @@ class Factory_Render_Adapter {
 		?>
 
 		<?php if ( '' === $query_key ) : ?>
-			<section class="factory-listing-wrap" style="max-width: 1160px; margin: 64px auto 76px; padding: 0 24px;">
+			<section class="factory-listing-wrap" style="max-width: 1160px; margin: 38px auto 34px; padding: 0 24px;">
 				<?php if ( $is_property_archive ) : ?>
 					<header style="position: relative; margin-bottom: 28px; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 24px; background: <?php echo esc_attr( $style_tokens['background'] ); ?>; overflow: hidden;">
 						<?php if ( ! empty( $archive_visual_images ) ) : ?>
@@ -1473,10 +1474,10 @@ class Factory_Render_Adapter {
 		<?php endif; ?>
 
 		<?php if ( '' === $query_key ) : ?>
+			</section>
 			<?php if ( $is_property_archive ) : ?>
 				<?php echo $this->render_generated_footer( $blueprint ); ?>
 			<?php endif; ?>
-			</section>
 		<?php endif; ?>
 
 		<?php
@@ -2448,18 +2449,18 @@ class Factory_Render_Adapter {
 			: 'Kyiv Turquoise Realty';
 		$year         = gmdate( 'Y' );
 
-		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 44px 24px 24px;">';
+		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 38px 24px 22px;">';
 		$html .= '<div style="max-width: 1120px; margin: 0 auto;">';
 		$html .= '<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(150px, 0.7fr)); gap: 24px; align-items: start;">';
 		$html .= '<div>';
 		$html .= '<strong style="display: block; font-size: 22px; line-height: 1.2; margin-bottom: 10px; color: #fff;">' . esc_html( $brand ) . '</strong>';
-		$html .= '<p style="color: rgba(255,255,255,0.72); font-size: 14px; line-height: 1.65; margin: 0;">Generated real estate catalog with validated property pages.</p>';
+		$html .= '<p style="color: rgba(255,255,255,0.88); font-size: 14px; line-height: 1.6; margin: 0;">Generated real estate catalog with validated property pages.</p>';
 		$html .= '</div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none;">Contact</a></div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.82);">Contact agency</span></div>';
-		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.82);">Validation proof available in Site Factory</span></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.94); text-decoration: none;">Contact</a></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.9);">Contact agency</span></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.9); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.9);">Validation proof available in Site Factory</span></div>';
 		$html .= '</div>';
-		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.62); font-size: 13px; margin-top: 28px; padding-top: 18px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
+		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.78); font-size: 13px; margin-top: 24px; padding-top: 16px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
 		$html .= '</div>';
 		$html .= '</footer>';
 
@@ -2554,7 +2555,7 @@ class Factory_Render_Adapter {
 			[ 'icon' => '04', 'title' => 'Clear communication', 'text' => 'Contact details and proof-backed generated pages make follow-up straightforward.' ],
 		];
 
-		$html  = '<section class="factory-home-benefits" style="max-width: 1120px; margin: 0 auto; padding: 34px 24px 24px;">';
+		$html  = '<section class="factory-home-benefits" style="max-width: 1120px; margin: 0 auto; padding: 30px 24px 36px;">';
 		$html .= '<header style="max-width: 680px; margin-bottom: 24px;">';
 		$html .= '<span style="color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase;">Generated real estate service</span>';
 		$html .= '<h2 style="font-size: clamp(30px, 4vw, 48px); line-height: 1.08; margin: 8px 0 10px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">How can we help you find real estate?</h2>';
@@ -2571,10 +2572,11 @@ class Factory_Render_Adapter {
 		}
 
 		$html .= '</div>';
-		$html .= '<div style="margin-top: 28px; border-radius: 26px; background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: clamp(26px, 5vw, 46px); display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;">';
+		$html .= '<div style="margin-top: 24px; border-radius: 26px; background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: clamp(26px, 5vw, 42px); display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;">';
 		$html .= '<div>';
 		$html .= '<span style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px;">Kyiv property search</span>';
-		$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 0;">Ready to find your Kyiv property?</h2>';
+		$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 0 0 8px; color: #fff;">Ready to find your Kyiv property?</h2>';
+		$html .= '<p style="color: rgba(255,255,255,0.9); font-size: 15px; line-height: 1.55; margin: 0;">Browse generated listings or request a viewing from a property page.</p>';
 		$html .= '</div>';
 		$html .= '<a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">Browse properties</a>';
 		$html .= '</div>';
@@ -2668,7 +2670,7 @@ class Factory_Render_Adapter {
 		$cta_label    = $contact['cta_label'] ?? 'Browse properties';
 		$cta_url      = $this->resolve_frontend_url( $contact['cta_url'] ?? '', '/properties/' );
 
-		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 88px 24px; color: ' . esc_attr( $style_tokens['text'] ) . ';">';
+		$html  = '<section class="factory-contact-page" style="background: ' . esc_attr( $background ) . '; margin: 0; padding: 58px 24px 44px; color: ' . esc_attr( $style_tokens['text'] ) . ';">';
 		$html .= '<div style="max-width: 920px; margin: 0 auto;">';
 		$html .= '<span style="display: inline-flex; border-radius: 999px; background: ' . esc_attr( $surface ) . '; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 18px;">Kyiv agency</span>';
 		$html .= '<h1 style="font-size: clamp(30px, 3.2vw, 44px); line-height: 1.08; margin: 0 0 18px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h1>';
