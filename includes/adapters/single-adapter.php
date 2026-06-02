@@ -317,7 +317,7 @@ class Factory_Single_Adapter {
 							</div>
 						<?php endif; ?>
 
-						<a href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 46px; padding: 0 18px; font-size: 14px; font-weight: 900; text-decoration: none;">
+						<a class="factory-button-link" href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 46px; padding: 0 18px; font-size: 14px; font-weight: 900; text-decoration: none;">
 							Request viewing
 						</a>
 					</div>
@@ -423,7 +423,7 @@ class Factory_Single_Adapter {
 							Contact the agency to schedule a viewing or request more details.
 						</p>
 
-						<a href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; padding: 11px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+						<a class="factory-button-link" href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; padding: 11px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
 							Contact agency
 						</a>
 					</aside>

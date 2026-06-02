@@ -68,6 +68,7 @@ class Factory_Render_Adapter {
 			$styles[] = '.factory-generated-home-page .main-navigation a:hover,.factory-generated-home-page .menu a:hover,.factory-generated-home-page nav a:hover,.factory-generated-home-page .current-menu-item > a,.factory-generated-properties-page .main-navigation a:hover,.factory-generated-properties-page .menu a:hover,.factory-generated-properties-page nav a:hover,.factory-generated-properties-page .current-menu-item > a,.factory-generated-contact-page .main-navigation a:hover,.factory-generated-contact-page .menu a:hover,.factory-generated-contact-page nav a:hover,.factory-generated-contact-page .current-menu-item > a,.factory-generated-property-single-page .main-navigation a:hover,.factory-generated-property-single-page .menu a:hover,.factory-generated-property-single-page nav a:hover,.factory-generated-property-single-page .current-menu-item > a{color:' . $accent . '!important;}';
 			$styles[] = '.factory-generated-home-page button,.factory-generated-home-page input[type="submit"],.factory-generated-properties-page button,.factory-generated-properties-page input[type="submit"],.factory-generated-contact-page button,.factory-generated-contact-page input[type="submit"],.factory-generated-property-single-page button,.factory-generated-property-single-page input[type="submit"]{background:' . $button . '!important;border-color:' . $button . '!important;color:' . $button_text . '!important;}';
 			$styles[] = '.factory-generated-home-page button:hover,.factory-generated-home-page input[type="submit"]:hover,.factory-generated-properties-page button:hover,.factory-generated-properties-page input[type="submit"]:hover,.factory-generated-contact-page button:hover,.factory-generated-contact-page input[type="submit"]:hover,.factory-generated-property-single-page button:hover,.factory-generated-property-single-page input[type="submit"]:hover{background:' . $primary . '!important;border-color:' . $primary . '!important;color:' . $button_text . '!important;}';
+			$styles[] = '.factory-generated-home-page .site-content,.factory-generated-properties-page .site-content,.factory-generated-contact-page .site-content,.factory-generated-property-single-page .site-content{margin-bottom:0!important;padding-bottom:0!important}.factory-generated-home-page .site-main,.factory-generated-properties-page .site-main,.factory-generated-contact-page .site-main,.factory-generated-property-single-page .site-main{margin-bottom:0!important}.factory-generated-home-page button,.factory-generated-home-page input[type="submit"],.factory-generated-home-page .factory-button-link,.factory-generated-properties-page button,.factory-generated-properties-page input[type="submit"],.factory-generated-properties-page .factory-button-link,.factory-generated-properties-page .factory-property-action,.factory-generated-properties-page .factory-property-pagination a,.factory-generated-contact-page button,.factory-generated-contact-page input[type="submit"],.factory-generated-contact-page .factory-button-link,.factory-generated-property-single-page button,.factory-generated-property-single-page input[type="submit"],.factory-generated-property-single-page .factory-button-link{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease,color .18s ease}.factory-generated-home-page .factory-button-link:hover,.factory-generated-home-page .factory-button-link:focus-visible,.factory-generated-properties-page .factory-button-link:hover,.factory-generated-properties-page .factory-button-link:focus-visible,.factory-generated-properties-page .factory-property-action:hover,.factory-generated-properties-page .factory-property-action:focus-visible,.factory-generated-properties-page .factory-property-pagination a:hover,.factory-generated-properties-page .factory-property-pagination a:focus-visible,.factory-generated-contact-page .factory-button-link:hover,.factory-generated-contact-page .factory-button-link:focus-visible,.factory-generated-property-single-page .factory-button-link:hover,.factory-generated-property-single-page .factory-button-link:focus-visible{transform:translateY(-1px);box-shadow:0 12px 26px rgba(15,118,110,.16);outline:2px solid ' . $accent . ';outline-offset:3px}.factory-generated-properties-page .factory-property-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.factory-generated-properties-page .factory-property-card:hover{transform:translateY(-2px);border-color:' . $primary . '!important;box-shadow:0 20px 48px rgba(15,118,110,.16)!important}.factory-generated-properties-page .factory-property-card img{transition:transform .24s ease}.factory-generated-properties-page .factory-property-card:hover img{transform:scale(1.02)}.factory-generated-properties-page .factory-property-card h2 a{transition:color .18s ease}.factory-generated-properties-page .factory-property-card h2 a:hover,.factory-generated-properties-page .factory-property-card h2 a:focus-visible{color:' . $accent . '!important;outline:0}.factory-generated-footer a{transition:color .18s ease,text-decoration-color .18s ease}.factory-generated-footer a:hover,.factory-generated-footer a:focus-visible{color:#fff!important;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;outline:2px solid ' . $accent . ';outline-offset:3px}';
 			$styles[] = '.factory-generated-properties-page .breadcrumbs,.factory-generated-properties-page .breadcrumb,.factory-generated-properties-page .breadcrumb-trail,.factory-generated-contact-page .breadcrumbs,.factory-generated-contact-page .breadcrumb,.factory-generated-contact-page .breadcrumb-trail,.factory-generated-property-single-page .breadcrumbs,.factory-generated-property-single-page .breadcrumb,.factory-generated-property-single-page .breadcrumb-trail{margin-bottom:12px!important;padding-bottom:0!important}.factory-generated-properties-page .breadcrumbs a,.factory-generated-properties-page .breadcrumb a,.factory-generated-contact-page .breadcrumbs a,.factory-generated-contact-page .breadcrumb a,.factory-generated-property-single-page .breadcrumbs a,.factory-generated-property-single-page .breadcrumb a{color:' . $primary . '!important;}';
 			$styles[] = '.factory-generated-home-page .site-footer,.factory-generated-home-page footer.site-footer,.factory-generated-properties-page .site-footer,.factory-generated-properties-page footer.site-footer,.factory-generated-contact-page .site-footer,.factory-generated-contact-page footer.site-footer,.factory-generated-property-single-page .site-footer,.factory-generated-property-single-page footer.site-footer{display:none!important;}';
 			$styles[] = '@media(max-width:900px){.factory-property-search-layout{grid-template-columns:1fr!important}.factory-property-search-layout aside{position:static!important}}@media(max-width:760px){.factory-property-card-row{grid-template-columns:1fr!important}.factory-property-card-row img{min-height:220px!important}.factory-generated-footer [style*="grid-template-columns"]{grid-template-columns:1fr!important}}';
@@ -1726,7 +1727,7 @@ class Factory_Render_Adapter {
 					<button type="submit" style="border: 0; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 42px; padding: 0 18px; font-weight: 800; cursor: pointer;">
 						<?php echo esc_html( 'Search' ); ?>
 					</button>
-					<a href="<?php echo esc_url( $reset_url ); ?>" style="display: inline-flex; align-items: center; min-height: 42px; color: <?php echo esc_attr( $style_tokens['link'] ); ?>; font-weight: 800; text-decoration: none;">
+					<a class="factory-button-link" href="<?php echo esc_url( $reset_url ); ?>" style="display: inline-flex; align-items: center; min-height: 42px; color: <?php echo esc_attr( $style_tokens['link'] ); ?>; font-weight: 800; text-decoration: none;">
 						<?php echo esc_html( 'Reset' ); ?>
 					</a>
 				</div>
@@ -2103,7 +2104,7 @@ class Factory_Render_Adapter {
 							</div>
 						<?php endif; ?>
 
-						<a href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 42px; padding: 0 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+						<a class="factory-property-action" href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 42px; padding: 0 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
 							View property
 						</a>
 					</div>
@@ -2184,7 +2185,7 @@ class Factory_Render_Adapter {
 					</div>
 				<?php endif; ?>
 
-				<a href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; color: <?php echo esc_attr( $style_tokens['link'] ?: $accent ); ?>; font-size: 14px; font-weight: 800; text-decoration: none;">
+				<a class="factory-property-action" href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; color: <?php echo esc_attr( $style_tokens['link'] ?: $accent ); ?>; font-size: 14px; font-weight: 800; text-decoration: none;">
 					View property
 				</a>
 			</div>
@@ -2500,7 +2501,7 @@ class Factory_Render_Adapter {
 				$html .= '<span style="display: inline-flex; border-radius: 999px; background: ' . esc_attr( $surface ) . '; color: ' . esc_attr( $primary ) . '; padding: 8px 12px; font-size: 13px; font-weight: 800; margin-bottom: 18px;">Real Estate Beta</span>';
 				$html .= '<h1 style="font-size: clamp(36px, 4.5vw, 56px); line-height: 1.05; margin: 0 0 18px; letter-spacing: 0; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h1>';
 				$html .= '<p style="font-size: clamp(18px, 2.4vw, 26px); line-height: 1.45; color: ' . esc_attr( $muted ) . '; margin: 0 0 28px;">' . esc_html( $subtitle ) . '</p>';
-				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+				$html .= '<a class="factory-button-link" href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
 				$html .= '</div>';
 				$html .= '</div>';
 				$html .= '</section>';
@@ -2518,7 +2519,7 @@ class Factory_Render_Adapter {
 				$html .= '<span style="color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0;">Kyiv catalog</span>';
 				$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 6px 0 0; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h2>';
 				$html .= '</div>';
-				$html .= '<a href="' . esc_url( $this->resolve_frontend_url( '/properties/', '/properties/' ) ) . '" style="color: ' . esc_attr( $style_tokens['link'] ?: $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
+				$html .= '<a class="factory-button-link" href="' . esc_url( $this->resolve_frontend_url( '/properties/', '/properties/' ) ) . '" style="color: ' . esc_attr( $style_tokens['link'] ?: $accent ) . '; font-size: 14px; font-weight: 900; text-decoration: none;">View all</a>';
 				$html .= '</header>';
 				$html .= sprintf(
 					'[factory_listing slug="%s" query="%s"]',
@@ -2578,7 +2579,7 @@ class Factory_Render_Adapter {
 		$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 0 0 8px; color: #fff;">Ready to find your Kyiv property?</h2>';
 		$html .= '<p style="color: rgba(255,255,255,0.9); font-size: 15px; line-height: 1.55; margin: 0;">Browse generated listings or request a viewing from a property page.</p>';
 		$html .= '</div>';
-		$html .= '<a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">Browse properties</a>';
+		$html .= '<a class="factory-button-link" href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">Browse properties</a>';
 		$html .= '</div>';
 		$html .= '</section>';
 
@@ -2679,7 +2680,7 @@ class Factory_Render_Adapter {
 		$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Phone</strong><span>' . esc_html( $phone ) . '</span></div>';
 		$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 20px; padding: 22px;"><strong style="display: block; color: ' . esc_attr( $primary ) . '; margin-bottom: 6px;">Email</strong><span>' . esc_html( $email ) . '</span></div>';
 		$html .= '</div>';
-		$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ?: $accent ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
+		$html .= '<a class="factory-button-link" href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ?: $accent ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
 		$html .= '[factory_request_viewing]';
 		$html .= '</div>';
 		$html .= '</section>';
@@ -2784,7 +2785,7 @@ class Factory_Render_Adapter {
 			<p style="color: #52635f; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
 				JetFormBuilder is not connected for this demo yet, so requests are routed through the agency email fallback.
 			</p>
-			<a href="<?php echo esc_url( $mailto ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $accent ); ?>; color: #fff; padding: 12px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+			<a class="factory-button-link" href="<?php echo esc_url( $mailto ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $accent ); ?>; color: #fff; padding: 12px 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
 				Email the agency
 			</a>
 		</div>
