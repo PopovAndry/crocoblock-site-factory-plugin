@@ -203,7 +203,7 @@ function factory_ai_public_settings(): array {
 	$key_source = $resolved['source'] ?? 'none';
 	$warnings = [];
 	$notices = [
-		'AI assistance is not used to apply the deterministic Real Estate preset yet.',
+		'AI assistance is configured for future workflows. The Real Estate demo generator is deterministic and does not call external AI providers in this beta.',
 	];
 
 	if ( ! factory_ai_storage_available() ) {
