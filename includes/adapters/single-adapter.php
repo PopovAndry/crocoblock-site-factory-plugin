@@ -249,6 +249,7 @@ class Factory_Single_Adapter {
 			[ 'factory_property' => sanitize_title( get_post_field( 'post_name', $post_id ) ) ],
 			home_url( '/contact/' )
 		);
+		$gallery_images = $this->get_property_gallery_images( $post_id );
 		$stats         = [];
 		$details       = [];
 
@@ -289,18 +290,17 @@ class Factory_Single_Adapter {
 		<main class="factory-single-wrap factory-property-single-wrap" style="max-width: 1180px; margin: 64px auto 80px; padding: 0 24px;">
 			<article <?php post_class( 'factory-single factory-property-single', $post_id ); ?>>
 				<header style="margin-bottom: 34px;">
-					<?php if ( has_post_thumbnail( $post_id ) ) : ?>
-						<div style="margin-bottom: 28px; overflow: hidden; border-radius: 24px; background: <?php echo esc_attr( $background ); ?>; box-shadow: 0 20px 48px rgba(15, 118, 110, 0.12);">
-							<?php
-							echo get_the_post_thumbnail(
-								$post_id,
-								'large',
-								[
-									'style'   => 'display: block; width: 100%; height: min(52vw, 440px); object-fit: cover;',
-									'loading' => 'eager',
-								]
-							);
-							?>
+					<?php if ( ! empty( $gallery_images ) ) : ?>
+						<div class="factory-property-gallery" style="display: grid; grid-template-columns: <?php echo count( $gallery_images ) > 1 ? 'minmax(0, 1.35fr) minmax(min(100%, 220px), 0.65fr)' : '1fr'; ?>; gap: 12px; margin-bottom: 28px; border-radius: 26px; overflow: hidden; background: <?php echo esc_attr( $background ); ?>; box-shadow: 0 20px 48px rgba(15, 118, 110, 0.12);">
+							<img src="<?php echo esc_url( $gallery_images[0]['url'] ); ?>" alt="<?php echo esc_attr( $gallery_images[0]['alt'] ); ?>" style="display: block; width: 100%; height: min(54vw, 500px); min-height: 320px; object-fit: cover;">
+
+							<?php if ( count( $gallery_images ) > 1 ) : ?>
+								<div style="display: grid; gap: 12px;">
+									<?php foreach ( array_slice( $gallery_images, 1, 3 ) as $image ) : ?>
+										<img src="<?php echo esc_url( $image['url'] ); ?>" alt="<?php echo esc_attr( $image['alt'] ); ?>" style="display: block; width: 100%; height: 100%; min-height: 154px; object-fit: cover;">
+									<?php endforeach; ?>
+								</div>
+							<?php endif; ?>
 						</div>
 					<?php endif; ?>
 
@@ -482,6 +482,56 @@ class Factory_Single_Adapter {
 		}
 
 		return (string) $terms[0];
+	}
+
+	private function get_property_gallery_images( int $post_id ): array {
+		$images       = [];
+		$featured_id  = get_post_thumbnail_id( $post_id );
+		$featured_url = $featured_id ? wp_get_attachment_image_url( $featured_id, 'large' ) : '';
+
+		if ( $featured_url ) {
+			$images[] = [
+				'id'  => (int) $featured_id,
+				'url' => $featured_url,
+				'alt' => get_post_meta( (int) $featured_id, '_wp_attachment_image_alt', true ) ?: get_the_title( $post_id ),
+			];
+		}
+
+		$related_posts = get_posts( [
+			'post_type'      => 'property',
+			'post_status'    => 'publish',
+			'posts_per_page' => 6,
+			'post__not_in'   => [ $post_id ],
+			'fields'         => 'ids',
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		] );
+
+		foreach ( $related_posts as $related_id ) {
+			$thumbnail_id = get_post_thumbnail_id( (int) $related_id );
+
+			if ( ! $thumbnail_id || (int) $thumbnail_id === (int) $featured_id ) {
+				continue;
+			}
+
+			$url = wp_get_attachment_image_url( $thumbnail_id, 'medium_large' );
+
+			if ( ! $url ) {
+				continue;
+			}
+
+			$images[] = [
+				'id'  => (int) $thumbnail_id,
+				'url' => $url,
+				'alt' => get_post_meta( (int) $thumbnail_id, '_wp_attachment_image_alt', true ) ?: get_the_title( (int) $related_id ),
+			];
+
+			if ( count( $images ) >= 4 ) {
+				break;
+			}
+		}
+
+		return $images;
 	}
 
 	private function format_property_price( $price ): string {

@@ -30,15 +30,51 @@ class Factory_Render_Adapter {
 			$classes[] = 'factory-generated-contact-page';
 		}
 
+		if ( $this->is_generated_archive_page_request() ) {
+			$classes[] = 'factory-generated-properties-page';
+		}
+
+		if ( $this->is_generated_home_page_request() ) {
+			$classes[] = 'factory-generated-home-page';
+		}
+
+		if ( is_singular( 'property' ) ) {
+			$classes[] = 'factory-generated-property-single-page';
+		}
+
 		return $classes;
 	}
 
 	public function print_contact_page_title_styles(): void {
-		if ( ! $this->is_generated_contact_page_request() ) {
+		$blueprint    = factory_get_blueprint();
+		$style_tokens = $this->get_site_style_tokens( $blueprint );
+		$primary      = esc_attr( $style_tokens['primary'] );
+		$accent       = esc_attr( $style_tokens['accent'] );
+		$button       = esc_attr( $style_tokens['button'] );
+		$button_text  = esc_attr( $style_tokens['button_text'] );
+		$styles       = [];
+
+		if ( $this->is_generated_contact_page_request() ) {
+			$styles[] = '.factory-generated-contact-page .entry-title,.factory-generated-contact-page .page-title,.factory-generated-contact-page .post-title,.factory-generated-contact-page .page-header,.factory-generated-contact-page .entry-header,.factory-generated-contact-page .site-main > h1,.factory-generated-contact-page main > h1{display:none!important;}';
+		}
+
+		if ( $this->is_generated_archive_page_request() ) {
+			$styles[] = '.factory-generated-properties-page .entry-title,.factory-generated-properties-page .page-title,.factory-generated-properties-page .post-title,.factory-generated-properties-page .page-header,.factory-generated-properties-page .entry-header,.factory-generated-properties-page .site-main > h1,.factory-generated-properties-page main > h1{display:none!important;}';
+		}
+
+		if ( $this->is_generated_home_page_request() || $this->is_generated_archive_page_request() || $this->is_generated_contact_page_request() || is_singular( 'property' ) ) {
+			$styles[] = '.factory-generated-home-page .site-title,.factory-generated-home-page .site-title a,.factory-generated-home-page .site-logo,.factory-generated-home-page .site-logo a,.factory-generated-home-page .site-logo__link,.factory-generated-home-page .site-branding a,.factory-generated-home-page .custom-logo-link,.factory-generated-properties-page .site-title,.factory-generated-properties-page .site-title a,.factory-generated-properties-page .site-logo,.factory-generated-properties-page .site-logo a,.factory-generated-properties-page .site-logo__link,.factory-generated-properties-page .site-branding a,.factory-generated-properties-page .custom-logo-link,.factory-generated-contact-page .site-title,.factory-generated-contact-page .site-title a,.factory-generated-contact-page .site-logo,.factory-generated-contact-page .site-logo a,.factory-generated-contact-page .site-logo__link,.factory-generated-contact-page .site-branding a,.factory-generated-contact-page .custom-logo-link,.factory-generated-property-single-page .site-title,.factory-generated-property-single-page .site-title a,.factory-generated-property-single-page .site-logo,.factory-generated-property-single-page .site-logo a,.factory-generated-property-single-page .site-logo__link,.factory-generated-property-single-page .site-branding a,.factory-generated-property-single-page .custom-logo-link{color:' . $primary . '!important;}';
+			$styles[] = '.factory-generated-home-page .main-navigation a,.factory-generated-home-page .menu a,.factory-generated-home-page nav a,.factory-generated-properties-page .main-navigation a,.factory-generated-properties-page .menu a,.factory-generated-properties-page nav a,.factory-generated-contact-page .main-navigation a,.factory-generated-contact-page .menu a,.factory-generated-contact-page nav a,.factory-generated-property-single-page .main-navigation a,.factory-generated-property-single-page .menu a,.factory-generated-property-single-page nav a{color:' . $primary . '!important;}';
+			$styles[] = '.factory-generated-home-page .main-navigation a:hover,.factory-generated-home-page .menu a:hover,.factory-generated-home-page nav a:hover,.factory-generated-home-page .current-menu-item > a,.factory-generated-properties-page .main-navigation a:hover,.factory-generated-properties-page .menu a:hover,.factory-generated-properties-page nav a:hover,.factory-generated-properties-page .current-menu-item > a,.factory-generated-contact-page .main-navigation a:hover,.factory-generated-contact-page .menu a:hover,.factory-generated-contact-page nav a:hover,.factory-generated-contact-page .current-menu-item > a,.factory-generated-property-single-page .main-navigation a:hover,.factory-generated-property-single-page .menu a:hover,.factory-generated-property-single-page nav a:hover,.factory-generated-property-single-page .current-menu-item > a{color:' . $accent . '!important;}';
+			$styles[] = '.factory-generated-home-page button,.factory-generated-home-page input[type="submit"],.factory-generated-properties-page button,.factory-generated-properties-page input[type="submit"],.factory-generated-contact-page button,.factory-generated-contact-page input[type="submit"],.factory-generated-property-single-page button,.factory-generated-property-single-page input[type="submit"]{background:' . $button . '!important;border-color:' . $button . '!important;color:' . $button_text . '!important;}';
+			$styles[] = '.factory-generated-home-page button:hover,.factory-generated-home-page input[type="submit"]:hover,.factory-generated-properties-page button:hover,.factory-generated-properties-page input[type="submit"]:hover,.factory-generated-contact-page button:hover,.factory-generated-contact-page input[type="submit"]:hover,.factory-generated-property-single-page button:hover,.factory-generated-property-single-page input[type="submit"]:hover{background:' . $primary . '!important;border-color:' . $primary . '!important;color:' . $button_text . '!important;}';
+		}
+
+		if ( empty( $styles ) ) {
 			return;
 		}
 
-		echo '<style id="factory-contact-page-title-style">.factory-generated-contact-page .entry-title,.factory-generated-contact-page .page-title,.factory-generated-contact-page .post-title,.factory-generated-contact-page .page-header,.factory-generated-contact-page .entry-header,.factory-generated-contact-page .site-main > h1,.factory-generated-contact-page main > h1{display:none!important;}</style>' . "\n";
+		echo '<style id="factory-generated-page-style">' . implode( '', $styles ) . '</style>' . "\n";
 	}
 
 	public function apply( array $blueprint ): void {
@@ -1302,6 +1338,7 @@ class Factory_Render_Adapter {
 
 		if ( $is_property_archive ) {
 			$query_args = $this->apply_property_filters_to_query_args( $query_args, $property_filters );
+			$query_args = $this->apply_property_archive_controls_to_query_args( $query_args, $property_filters );
 		}
 
 		$query = new WP_Query( $query_args );
@@ -1310,17 +1347,34 @@ class Factory_Render_Adapter {
 			return '<p>No items found.</p>';
 		}
 
-		$fields = $this->get_render_fields( $listing, $blueprint, $post_type );
+		$fields                = $this->get_render_fields( $listing, $blueprint, $post_type );
+		$archive_visual_images = $is_property_archive ? $this->get_property_archive_visual_images( $query ) : [];
 
 		ob_start();
 		?>
 
 		<?php if ( '' === $query_key ) : ?>
-			<section class="factory-listing-wrap" style="max-width: 1120px; margin: 80px auto; padding: 0 24px;">
-				<header style="margin-bottom: 40px;">
-					<h1 style="font-size: clamp(40px, 6vw, 72px); line-height: 1.05;">
-						<?php echo esc_html( $listing['title'] ?? 'Listing' ); ?>
-					</h1>
+			<section class="factory-listing-wrap" style="max-width: 1160px; margin: 64px auto 76px; padding: 0 24px;">
+				<header style="position: relative; min-height: 340px; margin-bottom: 28px; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 28px; background: <?php echo esc_attr( $style_tokens['background'] ); ?>; overflow: hidden;">
+					<?php if ( ! empty( $archive_visual_images ) ) : ?>
+						<div aria-hidden="true" style="position: absolute; inset: 0;">
+							<?php foreach ( $archive_visual_images as $index => $image ) : ?>
+								<div style="position: absolute; inset: 0; background-image: url('<?php echo esc_url( $image ); ?>'); background-size: cover; background-position: center; opacity: <?php echo 0 === $index ? '0.26' : '0.12'; ?>; transform: scale(<?php echo esc_attr( 1 + ( $index * 0.035 ) ); ?>);"></div>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+					<div style="position: absolute; inset: 0; background: linear-gradient(90deg, <?php echo esc_attr( $style_tokens['background'] ); ?> 0%, rgba(255,255,255,0.88) 52%, rgba(255,255,255,0.58) 100%);"></div>
+					<div style="position: relative; max-width: 760px; padding: clamp(32px, 6vw, 58px);">
+						<span style="display: inline-flex; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['primary'] ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 16px;">
+							Kyiv catalog
+						</span>
+						<h1 style="font-size: clamp(34px, 4.8vw, 58px); line-height: 1.05; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+							Find your next Kyiv property
+						</h1>
+						<p style="max-width: 690px; color: <?php echo esc_attr( $style_tokens['muted'] ); ?>; font-size: 17px; line-height: 1.62; margin: 0;">
+							Use stable catalog controls to compare generated apartments, houses, and commercial spaces by purpose, type, district, bedrooms, and price.
+						</p>
+					</div>
 				</header>
 
 				<?php if ( $is_property_archive ) : ?>
@@ -1329,7 +1383,7 @@ class Factory_Render_Adapter {
 		<?php endif; ?>
 
 		<?php if ( $query->have_posts() ) : ?>
-			<div class="factory-listing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px;">
+			<div class="factory-listing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px;">
 				<?php
 				while ( $query->have_posts() ) :
 					$query->the_post();
@@ -1397,6 +1451,10 @@ class Factory_Render_Adapter {
 			</div>
 		<?php endif; ?>
 
+		<?php if ( $is_property_archive && $query->max_num_pages > 1 ) : ?>
+			<?php echo $this->render_property_archive_pagination( $query, $style_tokens ); ?>
+		<?php endif; ?>
+
 		<?php if ( '' === $query_key ) : ?>
 			</section>
 		<?php endif; ?>
@@ -1416,6 +1474,8 @@ class Factory_Render_Adapter {
 			'bedrooms'      => '',
 			'price_min'     => '',
 			'price_max'     => '',
+			'sort'          => 'newest',
+			'per_page'      => '9',
 		];
 
 		foreach ( [ 'purpose', 'property_type', 'district', 'bedrooms' ] as $key ) {
@@ -1432,6 +1492,18 @@ class Factory_Render_Adapter {
 			if ( '' !== $value && preg_match( '/^\d+$/', $value ) ) {
 				$state[ $key ] = (string) absint( $value );
 			}
+		}
+
+		$sort = $this->get_query_param_string( 'factory_sort' );
+
+		if ( in_array( $sort, [ 'price_asc', 'price_desc', 'newest' ], true ) ) {
+			$state['sort'] = $sort;
+		}
+
+		$per_page = $this->get_query_param_string( 'factory_per_page' );
+
+		if ( in_array( $per_page, [ '9', '12', '30' ], true ) ) {
+			$state['per_page'] = $per_page;
 		}
 
 		if (
@@ -1555,6 +1627,49 @@ class Factory_Render_Adapter {
 		return $args;
 	}
 
+	private function apply_property_archive_controls_to_query_args( array $args, array $filters ): array {
+		$per_page = isset( $filters['per_page'] ) ? absint( $filters['per_page'] ) : 9;
+
+		if ( ! in_array( $per_page, [ 9, 12, 30 ], true ) ) {
+			$per_page = 9;
+		}
+
+		$args['posts_per_page'] = $per_page;
+		$args['paged']          = $this->get_property_archive_current_page();
+
+		switch ( $filters['sort'] ?? 'newest' ) {
+			case 'price_asc':
+				$args['meta_key'] = 'price';
+				$args['orderby']  = 'meta_value_num';
+				$args['order']    = 'ASC';
+				break;
+
+			case 'price_desc':
+				$args['meta_key'] = 'price';
+				$args['orderby']  = 'meta_value_num';
+				$args['order']    = 'DESC';
+				break;
+
+			case 'newest':
+			default:
+				$args['orderby'] = 'date';
+				$args['order']   = 'DESC';
+				break;
+		}
+
+		return $args;
+	}
+
+	private function get_property_archive_current_page(): int {
+		$paged = (int) get_query_var( 'paged' );
+
+		if ( $paged < 1 ) {
+			$paged = (int) get_query_var( 'page' );
+		}
+
+		return max( 1, $paged );
+	}
+
 	private function render_property_filters( array $filters, WP_Query $query, array $style_tokens ): string {
 		$options   = $this->get_property_filter_options();
 		$reset_url = $this->get_property_filter_reset_url();
@@ -1568,7 +1683,40 @@ class Factory_Render_Adapter {
 		ob_start();
 		?>
 
-		<form class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['background'] ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; padding: 18px; margin: 0 0 24px;">
+		<form class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['background'] ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 22px; padding: 20px; margin: 0 0 24px; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.08);">
+			<div style="display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 18px;">
+				<div>
+					<strong style="display: block; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>; font-size: 20px; line-height: 1.2; margin-bottom: 6px;">
+						Refine catalog
+					</strong>
+					<span style="color: <?php echo esc_attr( $muted ); ?>; font-size: 14px; line-height: 1.5;">
+						<?php echo esc_html( "{$count} {$label}" ); ?>. Popularity sorting is not shown because this beta has no real popularity metric yet.
+					</span>
+				</div>
+
+				<div style="display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 10px; min-width: min(100%, 320px);">
+					<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
+						<?php echo esc_html( 'Sort by' ); ?>
+						<select name="factory_sort" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>; color: <?php echo esc_attr( $text ); ?>;">
+							<option value="newest" <?php selected( $filters['sort'], 'newest' ); ?>><?php echo esc_html( 'Newest' ); ?></option>
+							<option value="price_asc" <?php selected( $filters['sort'], 'price_asc' ); ?>><?php echo esc_html( 'Price low to high' ); ?></option>
+							<option value="price_desc" <?php selected( $filters['sort'], 'price_desc' ); ?>><?php echo esc_html( 'Price high to low' ); ?></option>
+						</select>
+					</label>
+
+					<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
+						<?php echo esc_html( 'Per page' ); ?>
+						<select name="factory_per_page" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>; color: <?php echo esc_attr( $text ); ?>;">
+							<?php foreach ( [ '9', '12', '30' ] as $per_page ) : ?>
+								<option value="<?php echo esc_attr( $per_page ); ?>" <?php selected( $filters['per_page'], $per_page ); ?>>
+									<?php echo esc_html( $per_page ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+				</div>
+			</div>
+
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; align-items: end;">
 				<?php echo $this->render_property_filter_select( 'purpose', 'Purpose', $filters['purpose'], $options['purpose'], [], $style_tokens ); ?>
 				<?php echo $this->render_property_filter_select( 'property_type', 'Property Type', $filters['property_type'], $options['property_type'], [], $style_tokens ); ?>
@@ -1602,6 +1750,79 @@ class Factory_Render_Adapter {
 
 		<?php
 		return ob_get_clean();
+	}
+
+	private function render_property_archive_pagination( WP_Query $query, array $style_tokens ): string {
+		$links = paginate_links( [
+			'base'      => esc_url_raw( add_query_arg( 'paged', '%#%' ) ),
+			'format'    => '',
+			'current'   => $this->get_property_archive_current_page(),
+			'total'     => max( 1, (int) $query->max_num_pages ),
+			'type'      => 'array',
+			'prev_text' => 'Previous',
+			'next_text' => 'Next',
+			'add_args'  => $this->get_property_archive_pagination_args(),
+		] );
+
+		if ( empty( $links ) || ! is_array( $links ) ) {
+			return '';
+		}
+
+		ob_start();
+		?>
+
+		<nav class="factory-property-pagination" aria-label="<?php echo esc_attr( 'Property pagination' ); ?>" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 32px 0 0;">
+			<?php foreach ( $links as $link ) : ?>
+				<span style="display: inline-flex; min-height: 40px; min-width: 40px; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; background: <?php echo false !== strpos( $link, 'current' ) ? esc_attr( $style_tokens['primary'] ) : esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo false !== strpos( $link, 'current' ) ? '#fff' : esc_attr( $style_tokens['link'] ); ?>; font-weight: 900; overflow: hidden;">
+					<?php echo wp_kses_post( $link ); ?>
+				</span>
+			<?php endforeach; ?>
+		</nav>
+
+		<?php
+		return ob_get_clean();
+	}
+
+	private function get_property_archive_pagination_args(): array {
+		$args = [];
+
+		foreach ( [ 'purpose', 'property_type', 'district', 'bedrooms', 'price_min', 'price_max', 'factory_sort', 'factory_per_page' ] as $key ) {
+			$value = $this->get_query_param_string( $key );
+
+			if ( '' !== $value ) {
+				$args[ $key ] = $value;
+			}
+		}
+
+		return $args;
+	}
+
+	private function get_property_archive_visual_images( WP_Query $query ): array {
+		$images = [];
+
+		foreach ( $query->posts as $post ) {
+			if ( ! $post instanceof WP_Post ) {
+				continue;
+			}
+
+			$thumbnail_id = get_post_thumbnail_id( $post->ID );
+
+			if ( ! $thumbnail_id ) {
+				continue;
+			}
+
+			$url = wp_get_attachment_image_url( $thumbnail_id, 'large' );
+
+			if ( $url ) {
+				$images[] = $url;
+			}
+
+			if ( count( $images ) >= 3 ) {
+				break;
+			}
+		}
+
+		return $images;
 	}
 
 	private function render_property_filter_select(
@@ -2042,6 +2263,38 @@ class Factory_Render_Adapter {
 		$blueprint = factory_get_blueprint();
 		$contact   = $this->get_configured_page( $blueprint, 'contact' );
 		$slug      = is_string( $contact['slug'] ?? null ) ? $contact['slug'] : '';
+
+		if ( '' === $slug ) {
+			return false;
+		}
+
+		return is_page( $slug );
+	}
+
+	private function is_generated_archive_page_request(): bool {
+		if ( ! is_page() ) {
+			return false;
+		}
+
+		$blueprint = factory_get_blueprint();
+		$archive   = $this->get_configured_page( $blueprint, 'archive' );
+		$slug      = is_string( $archive['slug'] ?? null ) ? $archive['slug'] : '';
+
+		if ( '' === $slug ) {
+			return false;
+		}
+
+		return is_page( $slug );
+	}
+
+	private function is_generated_home_page_request(): bool {
+		if ( ! is_front_page() ) {
+			return false;
+		}
+
+		$blueprint = factory_get_blueprint();
+		$home      = $this->get_configured_page( $blueprint, 'home' );
+		$slug      = is_string( $home['slug'] ?? null ) ? $home['slug'] : '';
 
 		if ( '' === $slug ) {
 			return false;
