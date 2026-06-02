@@ -220,6 +220,7 @@ class Factory_Single_Adapter {
 
 			</article>
 		</main>
+		<?php echo $this->render_generated_footer( $blueprint ); ?>
 
 		<?php
 		return ob_get_clean();
@@ -291,73 +292,78 @@ class Factory_Single_Adapter {
 			<article <?php post_class( 'factory-single factory-property-single', $post_id ); ?>>
 				<header style="margin-bottom: 34px;">
 					<?php if ( ! empty( $gallery_images ) ) : ?>
-						<div class="factory-property-gallery" style="display: grid; grid-template-columns: <?php echo count( $gallery_images ) > 1 ? 'minmax(0, 1.35fr) minmax(min(100%, 220px), 0.65fr)' : '1fr'; ?>; gap: 12px; margin-bottom: 28px; border-radius: 26px; overflow: hidden; background: <?php echo esc_attr( $background ); ?>; box-shadow: 0 20px 48px rgba(15, 118, 110, 0.12);">
-							<img src="<?php echo esc_url( $gallery_images[0]['url'] ); ?>" alt="<?php echo esc_attr( $gallery_images[0]['alt'] ); ?>" style="display: block; width: 100%; height: min(54vw, 500px); min-height: 320px; object-fit: cover;">
-
-							<?php if ( count( $gallery_images ) > 1 ) : ?>
-								<div style="display: grid; gap: 12px;">
-									<?php foreach ( array_slice( $gallery_images, 1, 3 ) as $image ) : ?>
-										<img src="<?php echo esc_url( $image['url'] ); ?>" alt="<?php echo esc_attr( $image['alt'] ); ?>" style="display: block; width: 100%; height: 100%; min-height: 154px; object-fit: cover;">
-									<?php endforeach; ?>
-								</div>
-							<?php endif; ?>
+						<div class="factory-property-hero-image" style="margin-bottom: 20px; border-radius: 28px; overflow: hidden; background: <?php echo esc_attr( $background ); ?>; box-shadow: 0 22px 52px rgba(15, 118, 110, 0.14);">
+							<img src="<?php echo esc_url( $gallery_images[0]['url'] ); ?>" alt="<?php echo esc_attr( $gallery_images[0]['alt'] ); ?>" style="display: block; width: 100%; height: min(58vw, 540px); min-height: 340px; object-fit: cover;">
 						</div>
 					<?php endif; ?>
 
-					<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px;">
+					<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 22px; background: <?php echo esc_attr( $surface ); ?>; padding: 16px 18px; margin-bottom: 28px; box-shadow: 0 12px 30px rgba(15, 118, 110, 0.08);">
+						<?php if ( '' !== $price ) : ?>
+							<div>
+								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 12px; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">Price</div>
+								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: clamp(24px, 3vw, 34px); line-height: 1.05; font-weight: 900;">
+									<?php echo esc_html( $this->format_property_price( $price ) ); ?>
+								</div>
+							</div>
+						<?php endif; ?>
+
+						<?php if ( ! empty( $stats ) ) : ?>
+							<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+								<?php foreach ( $stats as $stat ) : ?>
+									<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $text ); ?>; padding: 10px 14px; font-size: 14px; font-weight: 900;">
+										<?php echo esc_html( $stat ); ?>
+									</span>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+
+						<a href="<?php echo esc_url( $contact_url ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ?: $accent ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 46px; padding: 0 18px; font-size: 14px; font-weight: 900; text-decoration: none;">
+							Request viewing
+						</a>
+					</div>
+
+					<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
 						<?php if ( '' !== $purpose ) : ?>
-							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $primary ); ?>; color: #fff; padding: 8px 12px; font-size: 13px; font-weight: 800; letter-spacing: 0;">
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $primary ); ?>; color: #fff; padding: 8px 12px; font-size: 13px; font-weight: 900; letter-spacing: 0;">
 								<?php echo esc_html( $purpose ); ?>
 							</span>
 						<?php endif; ?>
 
 						<?php if ( '' !== $property_type ) : ?>
-							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $primary ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 800; letter-spacing: 0;">
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $primary ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 900; letter-spacing: 0;">
 								<?php echo esc_html( $property_type ); ?>
 							</span>
 						<?php endif; ?>
 					</div>
 
-					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 28px; align-items: start;">
-						<div>
-							<h1 style="font-size: clamp(32px, 3.5vw, 48px); line-height: 1.08; margin: 0 0 16px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
-								<?php echo esc_html( $title ); ?>
-							</h1>
+					<h1 style="font-size: clamp(34px, 4vw, 54px); line-height: 1.06; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+						<?php echo esc_html( $title ); ?>
+					</h1>
 
-							<?php if ( '' !== $address ) : ?>
-								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 16px; line-height: 1.55; margin-bottom: 8px;">
-									<?php echo esc_html( $address ); ?>
-								</div>
-							<?php endif; ?>
-
-							<?php if ( '' !== $district ) : ?>
-								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 14px; line-height: 1.45; font-weight: 800;">
-									<?php echo esc_html( $district ); ?>
-								</div>
-							<?php endif; ?>
+					<?php if ( '' !== $address ) : ?>
+						<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 17px; line-height: 1.55; margin-bottom: 8px;">
+							<?php echo esc_html( $address ); ?>
 						</div>
+					<?php endif; ?>
 
-						<?php if ( '' !== $price ) : ?>
-						<div style="border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 18px; background: <?php echo esc_attr( $surface ); ?>; padding: 16px 18px; box-shadow: 0 12px 28px rgba(15, 118, 110, 0.08); max-width: 260px;">
-								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 13px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">
-									Price
-								</div>
-								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 26px; line-height: 1.1; font-weight: 900;">
-									<?php echo esc_html( $this->format_property_price( $price ) ); ?>
-								</div>
-							</div>
-						<?php endif; ?>
-					</div>
+					<?php if ( '' !== $district ) : ?>
+						<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 14px; line-height: 1.45; font-weight: 900;">
+							<?php echo esc_html( $district ); ?>
+						</div>
+					<?php endif; ?>
 				</header>
 
-				<?php if ( ! empty( $stats ) ) : ?>
-					<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px;">
-						<?php foreach ( $stats as $stat ) : ?>
-							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $text ); ?>; padding: 10px 14px; font-size: 14px; font-weight: 800;">
-								<?php echo esc_html( $stat ); ?>
-							</span>
-						<?php endforeach; ?>
-					</div>
+				<?php if ( count( $gallery_images ) > 1 ) : ?>
+					<section style="margin: 0 0 34px;">
+						<h2 style="font-size: 20px; line-height: 1.2; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+							More photos
+						</h2>
+						<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+							<?php foreach ( array_slice( $gallery_images, 1, 3 ) as $image ) : ?>
+								<img src="<?php echo esc_url( $image['url'] ); ?>" alt="<?php echo esc_attr( $image['alt'] ); ?>" style="display: block; width: 100%; height: 150px; object-fit: cover; border-radius: 18px;">
+							<?php endforeach; ?>
+						</div>
+					</section>
 				<?php endif; ?>
 
 				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 32px; align-items: start;">
@@ -424,6 +430,7 @@ class Factory_Single_Adapter {
 				</div>
 			</article>
 		</main>
+		<?php echo $this->render_generated_footer( $blueprint ); ?>
 
 		<?php
 		return ob_get_clean();
@@ -462,6 +469,29 @@ class Factory_Single_Adapter {
 		}
 
 		return preg_match( '/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $value ) ? $value : $fallback;
+	}
+
+	private function render_generated_footer( array $blueprint ): string {
+		$style_tokens = $this->get_site_style_tokens( $blueprint );
+		$home         = is_array( $blueprint['pages']['home'] ?? null ) ? $blueprint['pages']['home'] : [];
+		$brand        = is_string( $home['title'] ?? null ) && '' !== trim( $home['title'] )
+			? trim( $home['title'] )
+			: 'Kyiv Turquoise Realty';
+		$year         = gmdate( 'Y' );
+
+		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 44px 24px 24px;">';
+		$html .= '<div style="max-width: 1120px; margin: 0 auto;">';
+		$html .= '<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(150px, 0.7fr)); gap: 24px; align-items: start;">';
+		$html .= '<div><strong style="display: block; font-size: 22px; line-height: 1.2; margin-bottom: 10px; color: #fff;">' . esc_html( $brand ) . '</strong><p style="color: rgba(255,255,255,0.72); font-size: 14px; line-height: 1.65; margin: 0;">Generated real estate catalog with validated property pages.</p></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none;">Contact</a></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.82);">Contact agency</span></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.82);">Validation proof available in Site Factory</span></div>';
+		$html .= '</div>';
+		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.62); font-size: 13px; margin-top: 28px; padding-top: 18px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
+		$html .= '</div>';
+		$html .= '</footer>';
+
+		return $html;
 	}
 
 	private function get_property_meta_or_term( int $post_id, string $key ): string {

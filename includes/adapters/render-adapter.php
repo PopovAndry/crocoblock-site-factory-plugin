@@ -68,6 +68,8 @@ class Factory_Render_Adapter {
 			$styles[] = '.factory-generated-home-page .main-navigation a:hover,.factory-generated-home-page .menu a:hover,.factory-generated-home-page nav a:hover,.factory-generated-home-page .current-menu-item > a,.factory-generated-properties-page .main-navigation a:hover,.factory-generated-properties-page .menu a:hover,.factory-generated-properties-page nav a:hover,.factory-generated-properties-page .current-menu-item > a,.factory-generated-contact-page .main-navigation a:hover,.factory-generated-contact-page .menu a:hover,.factory-generated-contact-page nav a:hover,.factory-generated-contact-page .current-menu-item > a,.factory-generated-property-single-page .main-navigation a:hover,.factory-generated-property-single-page .menu a:hover,.factory-generated-property-single-page nav a:hover,.factory-generated-property-single-page .current-menu-item > a{color:' . $accent . '!important;}';
 			$styles[] = '.factory-generated-home-page button,.factory-generated-home-page input[type="submit"],.factory-generated-properties-page button,.factory-generated-properties-page input[type="submit"],.factory-generated-contact-page button,.factory-generated-contact-page input[type="submit"],.factory-generated-property-single-page button,.factory-generated-property-single-page input[type="submit"]{background:' . $button . '!important;border-color:' . $button . '!important;color:' . $button_text . '!important;}';
 			$styles[] = '.factory-generated-home-page button:hover,.factory-generated-home-page input[type="submit"]:hover,.factory-generated-properties-page button:hover,.factory-generated-properties-page input[type="submit"]:hover,.factory-generated-contact-page button:hover,.factory-generated-contact-page input[type="submit"]:hover,.factory-generated-property-single-page button:hover,.factory-generated-property-single-page input[type="submit"]:hover{background:' . $primary . '!important;border-color:' . $primary . '!important;color:' . $button_text . '!important;}';
+			$styles[] = '.factory-generated-home-page .site-footer,.factory-generated-home-page footer.site-footer,.factory-generated-properties-page .site-footer,.factory-generated-properties-page footer.site-footer,.factory-generated-contact-page .site-footer,.factory-generated-contact-page footer.site-footer,.factory-generated-property-single-page .site-footer,.factory-generated-property-single-page footer.site-footer{display:none!important;}';
+			$styles[] = '@media(max-width:900px){.factory-property-search-layout{grid-template-columns:1fr!important}.factory-property-search-layout aside{position:static!important}}@media(max-width:760px){.factory-property-card-row{grid-template-columns:1fr!important}.factory-property-card-row img{min-height:220px!important}.factory-generated-footer [style*="grid-template-columns"]{grid-template-columns:1fr!important}}';
 		}
 
 		if ( empty( $styles ) ) {
@@ -1355,41 +1357,51 @@ class Factory_Render_Adapter {
 
 		<?php if ( '' === $query_key ) : ?>
 			<section class="factory-listing-wrap" style="max-width: 1160px; margin: 64px auto 76px; padding: 0 24px;">
-				<header style="position: relative; min-height: 340px; margin-bottom: 28px; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 28px; background: <?php echo esc_attr( $style_tokens['background'] ); ?>; overflow: hidden;">
-					<?php if ( ! empty( $archive_visual_images ) ) : ?>
-						<div aria-hidden="true" style="position: absolute; inset: 0;">
-							<?php foreach ( $archive_visual_images as $index => $image ) : ?>
-								<div style="position: absolute; inset: 0; background-image: url('<?php echo esc_url( $image ); ?>'); background-size: cover; background-position: center; opacity: <?php echo 0 === $index ? '0.26' : '0.12'; ?>; transform: scale(<?php echo esc_attr( 1 + ( $index * 0.035 ) ); ?>);"></div>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-					<div style="position: absolute; inset: 0; background: linear-gradient(90deg, <?php echo esc_attr( $style_tokens['background'] ); ?> 0%, rgba(255,255,255,0.88) 52%, rgba(255,255,255,0.58) 100%);"></div>
-					<div style="position: relative; max-width: 760px; padding: clamp(32px, 6vw, 58px);">
-						<span style="display: inline-flex; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['primary'] ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 16px;">
-							Kyiv catalog
-						</span>
-						<h1 style="font-size: clamp(34px, 4.8vw, 58px); line-height: 1.05; margin: 0 0 14px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
-							Find your next Kyiv property
-						</h1>
-						<p style="max-width: 690px; color: <?php echo esc_attr( $style_tokens['muted'] ); ?>; font-size: 17px; line-height: 1.62; margin: 0;">
-							Use stable catalog controls to compare generated apartments, houses, and commercial spaces by purpose, type, district, bedrooms, and price.
-						</p>
-					</div>
-				</header>
-
 				<?php if ( $is_property_archive ) : ?>
-					<?php echo $this->render_property_filters( $property_filters, $query, $style_tokens ); ?>
+					<header style="position: relative; margin-bottom: 28px; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 24px; background: <?php echo esc_attr( $style_tokens['background'] ); ?>; overflow: hidden;">
+						<?php if ( ! empty( $archive_visual_images ) ) : ?>
+							<div aria-hidden="true" style="position: absolute; inset: 0;">
+								<?php foreach ( $archive_visual_images as $index => $image ) : ?>
+									<div style="position: absolute; inset: 0; background-image: url('<?php echo esc_url( $image ); ?>'); background-size: cover; background-position: center; opacity: <?php echo 0 === $index ? '0.18' : '0.08'; ?>; transform: scale(<?php echo esc_attr( 1 + ( $index * 0.03 ) ); ?>);"></div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+						<div style="position: absolute; inset: 0; background: linear-gradient(90deg, <?php echo esc_attr( $style_tokens['background'] ); ?> 0%, rgba(255,255,255,0.92) 72%, rgba(255,255,255,0.7) 100%);"></div>
+						<div style="position: relative; padding: clamp(24px, 4vw, 38px);">
+							<span style="display: inline-flex; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['primary'] ); ?>; padding: 8px 12px; font-size: 13px; font-weight: 900; margin-bottom: 14px;">
+								Findero-style search
+							</span>
+							<h1 style="font-size: clamp(32px, 4.2vw, 50px); line-height: 1.06; margin: 0 0 10px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+								Find your next Kyiv property
+							</h1>
+							<p style="max-width: 720px; color: <?php echo esc_attr( $style_tokens['muted'] ); ?>; font-size: 16px; line-height: 1.62; margin: 0;">
+								Explore generated Kyiv listings with stable filters, sorting, pagination, and Request Viewing links.
+							</p>
+						</div>
+					</header>
+					<div class="factory-property-search-layout" style="display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 28px; align-items: start;">
+						<aside style="position: sticky; top: 24px;">
+							<?php echo $this->render_property_filters( $property_filters, $query, $style_tokens ); ?>
+						</aside>
+						<div>
+							<?php echo $this->render_property_results_header( $property_filters, $query, $style_tokens ); ?>
+				<?php else : ?>
+					<header style="margin-bottom: 40px;">
+						<h1 style="font-size: clamp(40px, 6vw, 72px); line-height: 1.05;">
+							<?php echo esc_html( $listing['title'] ?? 'Listing' ); ?>
+						</h1>
+					</header>
 				<?php endif; ?>
 		<?php endif; ?>
 
 		<?php if ( $query->have_posts() ) : ?>
-			<div class="factory-listing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px;">
+			<div class="factory-listing-grid" style="display: grid; grid-template-columns: <?php echo $is_property_archive ? '1fr' : 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))'; ?>; gap: 24px;">
 				<?php
 				while ( $query->have_posts() ) :
 					$query->the_post();
 
 					if ( $is_property_listing ) {
-						echo $this->render_property_card( get_the_ID(), $style_tokens );
+						echo $this->render_property_card( get_the_ID(), $style_tokens, $is_property_archive ? 'row' : 'grid' );
 						continue;
 					}
 					?>
@@ -1455,7 +1467,15 @@ class Factory_Render_Adapter {
 			<?php echo $this->render_property_archive_pagination( $query, $style_tokens ); ?>
 		<?php endif; ?>
 
+		<?php if ( $is_property_archive && '' === $query_key ) : ?>
+						</div>
+					</div>
+		<?php endif; ?>
+
 		<?php if ( '' === $query_key ) : ?>
+			<?php if ( $is_property_archive ) : ?>
+				<?php echo $this->render_generated_footer( $blueprint ); ?>
+			<?php endif; ?>
 			</section>
 		<?php endif; ?>
 
@@ -1673,54 +1693,22 @@ class Factory_Render_Adapter {
 	private function render_property_filters( array $filters, WP_Query $query, array $style_tokens ): string {
 		$options   = $this->get_property_filter_options();
 		$reset_url = $this->get_property_filter_reset_url();
-		$count     = (int) $query->found_posts;
-		$label     = 1 === $count ? 'property found' : 'properties found';
 		$border    = $style_tokens['border'];
 		$text      = $style_tokens['text'];
 		$surface   = $style_tokens['surface'];
-		$muted     = $style_tokens['muted'];
 
 		ob_start();
 		?>
 
-		<form class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['background'] ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 22px; padding: 20px; margin: 0 0 24px; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.08);">
-			<div style="display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 18px;">
-				<div>
-					<strong style="display: block; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>; font-size: 20px; line-height: 1.2; margin-bottom: 6px;">
-						Refine catalog
-					</strong>
-					<span style="color: <?php echo esc_attr( $muted ); ?>; font-size: 14px; line-height: 1.5;">
-						<?php echo esc_html( "{$count} {$label}" ); ?>. Popularity sorting is not shown because this beta has no real popularity metric yet.
-					</span>
-				</div>
+		<form id="factory-property-search" class="factory-property-filters" method="get" action="<?php echo esc_url( $reset_url ); ?>" style="background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 22px; padding: 20px; margin: 0; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.08);">
+			<h2 style="font-size: 24px; line-height: 1.2; margin: 0 0 18px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+				Find Property
+			</h2>
 
-				<div style="display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 10px; min-width: min(100%, 320px);">
-					<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
-						<?php echo esc_html( 'Sort by' ); ?>
-						<select name="factory_sort" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>; color: <?php echo esc_attr( $text ); ?>;">
-							<option value="newest" <?php selected( $filters['sort'], 'newest' ); ?>><?php echo esc_html( 'Newest' ); ?></option>
-							<option value="price_asc" <?php selected( $filters['sort'], 'price_asc' ); ?>><?php echo esc_html( 'Price low to high' ); ?></option>
-							<option value="price_desc" <?php selected( $filters['sort'], 'price_desc' ); ?>><?php echo esc_html( 'Price high to low' ); ?></option>
-						</select>
-					</label>
-
-					<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
-						<?php echo esc_html( 'Per page' ); ?>
-						<select name="factory_per_page" style="width: 100%; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $surface ); ?>; color: <?php echo esc_attr( $text ); ?>;">
-							<?php foreach ( [ '9', '12', '30' ] as $per_page ) : ?>
-								<option value="<?php echo esc_attr( $per_page ); ?>" <?php selected( $filters['per_page'], $per_page ); ?>>
-									<?php echo esc_html( $per_page ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</label>
-				</div>
-			</div>
-
-			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; align-items: end;">
+			<div style="display: grid; gap: 14px;">
 				<?php echo $this->render_property_filter_select( 'purpose', 'Purpose', $filters['purpose'], $options['purpose'], [], $style_tokens ); ?>
+				<?php echo $this->render_property_filter_select( 'district', 'Location', $filters['district'], $options['district'], [], $style_tokens ); ?>
 				<?php echo $this->render_property_filter_select( 'property_type', 'Property Type', $filters['property_type'], $options['property_type'], [], $style_tokens ); ?>
-				<?php echo $this->render_property_filter_select( 'district', 'District', $filters['district'], $options['district'], [], $style_tokens ); ?>
 				<?php echo $this->render_property_filter_select( 'bedrooms', 'Bedrooms', $filters['bedrooms'], $options['bedrooms'], [ '1' => '1+', '2' => '2+', '3' => '3+', '4' => '4+' ], $style_tokens ); ?>
 
 				<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $text ); ?>; font-size: 13px; font-weight: 800;">
@@ -1744,9 +1732,49 @@ class Factory_Render_Adapter {
 			</div>
 		</form>
 
-		<div class="factory-property-results-count" style="margin: 0 0 20px; color: <?php echo esc_attr( $muted ); ?>; font-size: 15px; font-weight: 700;">
-			<?php echo esc_html( "{$count} {$label}" ); ?>
-		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	private function render_property_results_header( array $filters, WP_Query $query, array $style_tokens ): string {
+		$count = (int) $query->found_posts;
+		$label = 1 === $count ? 'property found' : 'properties found';
+
+		ob_start();
+		?>
+
+		<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 0 0 18px;">
+			<div>
+				<h2 style="font-size: clamp(26px, 3vw, 36px); line-height: 1.12; margin: 0 0 6px; color: <?php echo esc_attr( $style_tokens['heading'] ); ?>;">
+					Search Results
+				</h2>
+				<div style="color: <?php echo esc_attr( $style_tokens['muted'] ); ?>; font-size: 15px; font-weight: 800;">
+					<?php echo esc_html( "{$count} {$label}" ); ?>
+				</div>
+			</div>
+
+			<div style="display: grid; grid-template-columns: repeat(2, minmax(138px, 1fr)); gap: 10px; min-width: min(100%, 330px);">
+				<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $style_tokens['text'] ); ?>; font-size: 13px; font-weight: 800;">
+					<?php echo esc_html( 'Sort by' ); ?>
+					<select name="factory_sort" form="factory-property-search" style="width: 100%; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['text'] ); ?>;" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit();">
+						<option value="newest" <?php selected( $filters['sort'], 'newest' ); ?>><?php echo esc_html( 'Ordinary / Newest' ); ?></option>
+						<option value="price_asc" <?php selected( $filters['sort'], 'price_asc' ); ?>><?php echo esc_html( 'Price: low to high' ); ?></option>
+						<option value="price_desc" <?php selected( $filters['sort'], 'price_desc' ); ?>><?php echo esc_html( 'Price: high to low' ); ?></option>
+					</select>
+				</label>
+
+				<label style="display: grid; gap: 7px; color: <?php echo esc_attr( $style_tokens['text'] ); ?>; font-size: 13px; font-weight: 800;">
+					<?php echo esc_html( 'Per page' ); ?>
+					<select name="factory_per_page" form="factory-property-search" style="width: 100%; border: 1px solid <?php echo esc_attr( $style_tokens['border'] ); ?>; border-radius: 12px; min-height: 42px; padding: 8px 11px; background: <?php echo esc_attr( $style_tokens['surface'] ); ?>; color: <?php echo esc_attr( $style_tokens['text'] ); ?>;" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit();">
+						<?php foreach ( [ '9', '12', '30' ] as $per_page ) : ?>
+							<option value="<?php echo esc_attr( $per_page ); ?>" <?php selected( $filters['per_page'], $per_page ); ?>>
+								<?php echo esc_html( $per_page ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			</div>
+		</header>
 
 		<?php
 		return ob_get_clean();
@@ -1960,7 +1988,7 @@ class Factory_Render_Adapter {
 		return array_values( array_unique( $slugs ) );
 	}
 
-	private function render_property_card( int $post_id, array $style_tokens ): string {
+	private function render_property_card( int $post_id, array $style_tokens, string $variant = 'grid' ): string {
 		$primary       = $style_tokens['primary'];
 		$accent        = $style_tokens['accent'];
 		$background    = $style_tokens['background'];
@@ -1978,6 +2006,7 @@ class Factory_Render_Adapter {
 		$district      = get_post_meta( $post_id, 'district', true );
 		$purpose       = $this->get_property_meta_or_term( $post_id, 'purpose' );
 		$property_type = $this->get_property_meta_or_term( $post_id, 'property_type' );
+		$excerpt       = wp_trim_words( wp_strip_all_tags( get_the_excerpt( $post_id ) ?: get_post_field( 'post_content', $post_id ) ), 24 );
 		$stats         = [];
 
 		if ( is_numeric( $bedrooms ) && (float) $bedrooms > 0 ) {
@@ -1993,6 +2022,96 @@ class Factory_Render_Adapter {
 		}
 
 		ob_start();
+		?>
+
+		<?php if ( 'row' === $variant ) : ?>
+			<article class="factory-property-card factory-property-card-row" style="display: grid; grid-template-columns: minmax(220px, 290px) minmax(0, 1fr); gap: 0; background: <?php echo esc_attr( $surface ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; overflow: hidden; box-shadow: 0 14px 34px rgba(15, 118, 110, 0.09);">
+				<a href="<?php echo esc_url( $permalink ); ?>" style="display: block; position: relative; min-height: 230px; background: <?php echo esc_attr( $background ); ?>; text-decoration: none;">
+					<?php if ( has_post_thumbnail( $post_id ) ) : ?>
+						<?php
+						echo get_the_post_thumbnail(
+							$post_id,
+							'medium_large',
+							[
+								'style'   => 'display: block; width: 100%; height: 100%; min-height: 230px; object-fit: cover;',
+								'loading' => 'lazy',
+							]
+						);
+						?>
+					<?php else : ?>
+						<div style="height: 230px; display: flex; align-items: center; justify-content: center; color: <?php echo esc_attr( $primary ); ?>; font-weight: 800;">
+							<?php echo esc_html( $property_type ?: 'Property' ); ?>
+						</div>
+					<?php endif; ?>
+
+					<div style="position: absolute; left: 14px; top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+						<?php if ( '' !== $purpose ) : ?>
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $primary ); ?>; color: #fff; padding: 7px 11px; font-size: 12px; font-weight: 800;">
+								<?php echo esc_html( $purpose ); ?>
+							</span>
+						<?php endif; ?>
+						<?php if ( '' !== $property_type ) : ?>
+							<span style="display: inline-flex; align-items: center; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: <?php echo esc_attr( $primary ); ?>; padding: 7px 11px; font-size: 12px; font-weight: 800;">
+								<?php echo esc_html( $property_type ); ?>
+							</span>
+						<?php endif; ?>
+					</div>
+				</a>
+
+				<div style="display: grid; gap: 12px; padding: 22px 24px;">
+					<div style="display: flex; align-items: start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+						<div style="min-width: 0;">
+							<?php if ( '' !== $address ) : ?>
+								<div style="color: <?php echo esc_attr( $muted ); ?>; font-size: 13px; line-height: 1.45; margin-bottom: 6px;">
+									<?php echo esc_html( $address ); ?>
+								</div>
+							<?php endif; ?>
+							<h2 style="font-size: 22px; line-height: 1.22; margin: 0;">
+								<a href="<?php echo esc_url( $permalink ); ?>" style="color: <?php echo esc_attr( $style_tokens['heading'] ); ?>; text-decoration: none;">
+									<?php echo esc_html( $title ); ?>
+								</a>
+							</h2>
+							<?php if ( '' !== $district ) : ?>
+								<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 13px; line-height: 1.4; font-weight: 800; margin-top: 6px;">
+									<?php echo esc_html( $district ); ?>
+								</div>
+							<?php endif; ?>
+						</div>
+
+						<?php if ( '' !== $price ) : ?>
+							<div style="color: <?php echo esc_attr( $primary ); ?>; font-size: 24px; line-height: 1.1; font-weight: 900; white-space: nowrap;">
+								<?php echo esc_html( $this->format_property_price( $price ) ); ?>
+							</div>
+						<?php endif; ?>
+					</div>
+
+					<?php if ( '' !== $excerpt ) : ?>
+						<p style="color: <?php echo esc_attr( $muted ); ?>; font-size: 14px; line-height: 1.6; margin: 0;">
+							<?php echo esc_html( $excerpt ); ?>
+						</p>
+					<?php endif; ?>
+
+					<div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+						<?php if ( ! empty( $stats ) ) : ?>
+							<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+								<?php foreach ( $stats as $stat ) : ?>
+									<span style="display: inline-flex; align-items: center; border-radius: 999px; background: <?php echo esc_attr( $background ); ?>; color: <?php echo esc_attr( $text ); ?>; padding: 7px 10px; font-size: 13px; font-weight: 800;">
+										<?php echo esc_html( $stat ); ?>
+									</span>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+
+						<a href="<?php echo esc_url( $permalink ); ?>" style="display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: <?php echo esc_attr( $style_tokens['button'] ); ?>; color: <?php echo esc_attr( $style_tokens['button_text'] ); ?>; min-height: 42px; padding: 0 16px; font-size: 14px; font-weight: 900; text-decoration: none;">
+							View property
+						</a>
+					</div>
+				</div>
+			</article>
+
+			<?php
+			return ob_get_clean();
+		endif;
 		?>
 
 		<article class="factory-property-card" style="background: <?php echo esc_attr( $surface ); ?>; border: 1px solid <?php echo esc_attr( $border ); ?>; border-radius: 20px; overflow: hidden; box-shadow: 0 16px 38px rgba(15, 118, 110, 0.11);">
@@ -2321,6 +2440,32 @@ class Factory_Render_Adapter {
 		return is_string( $page['content'] ?? null ) ? $page['content'] : '';
 	}
 
+	private function render_generated_footer( array $blueprint ): string {
+		$style_tokens = $this->get_site_style_tokens( $blueprint );
+		$home         = $this->get_configured_page( $blueprint, 'home' );
+		$brand        = is_string( $home['title'] ?? null ) && '' !== trim( $home['title'] )
+			? trim( $home['title'] )
+			: 'Kyiv Turquoise Realty';
+		$year         = gmdate( 'Y' );
+
+		$html  = '<footer class="factory-generated-footer" style="width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: 44px 24px 24px;">';
+		$html .= '<div style="max-width: 1120px; margin: 0 auto;">';
+		$html .= '<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(150px, 0.7fr)); gap: 24px; align-items: start;">';
+		$html .= '<div>';
+		$html .= '<strong style="display: block; font-size: 22px; line-height: 1.2; margin-bottom: 10px; color: #fff;">' . esc_html( $brand ) . '</strong>';
+		$html .= '<p style="color: rgba(255,255,255,0.72); font-size: 14px; line-height: 1.65; margin: 0;">Generated real estate catalog with validated property pages.</p>';
+		$html .= '</div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Pages</strong><a href="' . esc_url( home_url( '/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Home</a><a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none; margin-bottom: 7px;">Properties</a><a href="' . esc_url( home_url( '/contact/' ) ) . '" style="display: block; color: rgba(255,255,255,0.82); text-decoration: none;">Contact</a></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Services</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Property search</span><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Request viewing</span><span style="display: block; color: rgba(255,255,255,0.82);">Contact agency</span></div>';
+		$html .= '<div><strong style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; text-transform: uppercase; margin-bottom: 10px;">Proof</strong><span style="display: block; color: rgba(255,255,255,0.82); margin-bottom: 7px;">Crocoblock-powered generated site</span><span style="display: block; color: rgba(255,255,255,0.82);">Validation proof available in Site Factory</span></div>';
+		$html .= '</div>';
+		$html .= '<div style="border-top: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.62); font-size: 13px; margin-top: 28px; padding-top: 18px;">&copy; ' . esc_html( $year ) . ' ' . esc_html( $brand ) . '. Generated by Site Factory.</div>';
+		$html .= '</div>';
+		$html .= '</footer>';
+
+		return $html;
+	}
+
 	private function render_home_page_content( array $blueprint ): string {
 		$home         = $this->get_configured_page( $blueprint, 'home' );
 		$sections     = is_array( $home['sections'] ?? null ) ? $home['sections'] : [];
@@ -2384,22 +2529,56 @@ class Factory_Render_Adapter {
 			}
 
 			if ( 'cta' === $type ) {
-				$title     = $section['title'] ?? 'Ready to find your Kyiv property?';
-				$text      = $section['text'] ?? '';
-				$cta_label = $section['cta_label'] ?? 'Contact agency';
-				$cta_url   = $this->resolve_frontend_url( $section['cta_url'] ?? '', '/contact/' );
-
-				$html .= '<section style="max-width: 1120px; margin: 0 auto; padding: 44px 24px 84px;">';
-				$html .= '<div style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 24px; padding: clamp(28px, 5vw, 54px); box-shadow: 0 18px 44px rgba(15, 118, 110, 0.11);">';
-				$html .= '<h2 style="font-size: clamp(30px, 4vw, 50px); line-height: 1.08; margin: 0 0 12px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $title ) . '</h2>';
-				$html .= '<p style="max-width: 620px; color: ' . esc_attr( $muted ) . '; font-size: 17px; line-height: 1.6; margin: 0 0 24px;">' . esc_html( $text ) . '</p>';
-				$html .= '<a href="' . esc_url( $cta_url ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 13px 18px; font-size: 14px; font-weight: 900; text-decoration: none;">' . esc_html( $cta_label ) . '</a>';
-				$html .= '</div>';
-				$html .= '</section>';
+				continue;
 			}
 		}
 
+		$html .= $this->render_home_benefits_section( $blueprint );
 		$html .= '</div>';
+		$html .= $this->render_generated_footer( $blueprint );
+
+		return $html;
+	}
+
+	private function render_home_benefits_section( array $blueprint ): string {
+		$style_tokens   = $this->get_site_style_tokens( $blueprint );
+		$primary        = $style_tokens['primary'];
+		$background     = $style_tokens['background'];
+		$surface        = $style_tokens['surface'];
+		$muted          = $style_tokens['muted'];
+		$border         = $style_tokens['border'];
+		$benefits       = [
+			[ 'icon' => '01', 'title' => 'Curated real estate selection', 'text' => 'Prepared generated listings give the beta a complete property catalog from the first run.' ],
+			[ 'icon' => '02', 'title' => 'Fast catalog search', 'text' => 'Purpose, location, type, bedroom, and price filters keep browsing focused and predictable.' ],
+			[ 'icon' => '03', 'title' => 'Request a viewing', 'text' => 'Each property connects to a contact flow with the selected listing context.' ],
+			[ 'icon' => '04', 'title' => 'Clear communication', 'text' => 'Contact details and proof-backed generated pages make follow-up straightforward.' ],
+		];
+
+		$html  = '<section class="factory-home-benefits" style="max-width: 1120px; margin: 0 auto; padding: 34px 24px 24px;">';
+		$html .= '<header style="max-width: 680px; margin-bottom: 24px;">';
+		$html .= '<span style="color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase;">Generated real estate service</span>';
+		$html .= '<h2 style="font-size: clamp(30px, 4vw, 48px); line-height: 1.08; margin: 8px 0 10px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">How can we help you find real estate?</h2>';
+		$html .= '<p style="color: ' . esc_attr( $muted ) . '; font-size: 16px; line-height: 1.65; margin: 0;">A clean generated experience for browsing, comparing, and requesting property viewings.</p>';
+		$html .= '</header>';
+		$html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">';
+
+		foreach ( $benefits as $benefit ) {
+			$html .= '<article style="background: ' . esc_attr( $surface ) . '; border: 1px solid ' . esc_attr( $border ) . '; border-radius: 20px; padding: 22px; box-shadow: 0 12px 28px rgba(15, 118, 110, 0.07);">';
+			$html .= '<span style="display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 14px; background: ' . esc_attr( $background ) . '; color: ' . esc_attr( $primary ) . '; font-size: 13px; font-weight: 900; margin-bottom: 16px;">' . esc_html( $benefit['icon'] ) . '</span>';
+			$html .= '<h3 style="font-size: 18px; line-height: 1.25; margin: 0 0 8px; color: ' . esc_attr( $style_tokens['heading'] ) . ';">' . esc_html( $benefit['title'] ) . '</h3>';
+			$html .= '<p style="color: ' . esc_attr( $muted ) . '; font-size: 14px; line-height: 1.6; margin: 0;">' . esc_html( $benefit['text'] ) . '</p>';
+			$html .= '</article>';
+		}
+
+		$html .= '</div>';
+		$html .= '<div style="margin-top: 28px; border-radius: 26px; background: ' . esc_attr( $style_tokens['heading'] ) . '; color: #fff; padding: clamp(26px, 5vw, 46px); display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;">';
+		$html .= '<div>';
+		$html .= '<span style="display: block; color: ' . esc_attr( $style_tokens['accent'] ) . '; font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 8px;">Kyiv property search</span>';
+		$html .= '<h2 style="font-size: clamp(28px, 4vw, 44px); line-height: 1.08; margin: 0;">Ready to find your Kyiv property?</h2>';
+		$html .= '</div>';
+		$html .= '<a href="' . esc_url( home_url( '/properties/' ) ) . '" style="display: inline-flex; align-items: center; border-radius: 999px; background: ' . esc_attr( $style_tokens['button'] ) . '; color: ' . esc_attr( $style_tokens['button_text'] ) . '; padding: 14px 20px; font-size: 15px; font-weight: 900; text-decoration: none;">Browse properties</a>';
+		$html .= '</div>';
+		$html .= '</section>';
 
 		return $html;
 	}
@@ -2502,6 +2681,7 @@ class Factory_Render_Adapter {
 		$html .= '[factory_request_viewing]';
 		$html .= '</div>';
 		$html .= '</section>';
+		$html .= $this->render_generated_footer( $blueprint );
 
 		return $html;
 	}
